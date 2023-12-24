@@ -6,6 +6,9 @@ A CLI implementation of pente.
 ## Game Rules
 You can find the rules of the game by following the wikipedia link at the top of this page. Our implementation will start and by default use the pro rule set for two players. 
 
+## Starting Out
+Here is a guide to start off with this project: [Link](https://github.com/cstainsby/CliPente/blob/main/DanDevDocs.md)
+
 
 ## Future Development
 Other Ideas that may be worth developing/looking into.
