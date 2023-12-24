@@ -1,5 +1,5 @@
 
-from GameServer.Pente import CatanTurnBuilder
+from PenteModel import PenteTurnBuilder
 
 class AiView():
     """A view for any Ai which can play the Catan Game."""

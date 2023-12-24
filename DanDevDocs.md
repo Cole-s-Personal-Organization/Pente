@@ -59,7 +59,15 @@ Everytime you want to work on this project you should follow these steps to setu
 
 
 ## Your Starting Point (12/23)
-The code I have written so far is very much still in a skeleton stage so reading too much into the stuff I have currently written may confuse you just as much as it has me confused. **The main thing to know** is that I will be following a MVC(Model View Controller) design pattern. 
+The code I have written so far is very much still in a skeleton stage so reading too much into the stuff I have currently written may confuse you just as much as it has me confused. **The main thing to know** is that I will be following a MVC(Model View Controller) design pattern.
+
+File to work on:
+
+        PenteModel.py
+
+Class to work on: 
+
+        PenteGameModel
 
 [Link](https://www.geeksforgeeks.org/mvc-design-pattern/) to an article about it.
 

@@ -1,6 +1,6 @@
 """Main driver for the Catan game server."""
 
-from Pente import PenteGameModel
+from PenteModel import PenteGameModel
 from PenteController import PenteController
 from GameLobby import Lobby
 
@@ -18,10 +18,10 @@ lobbies = []
 
 
 
-if __name__=="__main__":
-    new_catan_lobby = Lobby()
-    lobbies.append(new_catan_lobby)
-    model = CatanGameModel()
-    controller = CatanController(model=model, lobby=new_catan_lobby)
+# if __name__=="__main__":
+#     new_catan_lobby = Lobby()
+#     lobbies.append(new_catan_lobby)
+#     model = CatanGameModel()
+#     controller = CatanController(model=model, lobby=new_catan_lobby)
     
-    controller.run()
+#     controller.run()

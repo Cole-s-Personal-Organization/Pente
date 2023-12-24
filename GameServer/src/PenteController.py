@@ -5,7 +5,7 @@ An object which allows management
 from typing import List
 
 from GameLobby import Lobby
-from Pente import PenteGameModel
+from PenteModel import PenteGameModel, PenteTurnBuilder
 
 class PenteController():
     def __init__(self, model: PenteGameModel, lobby: Lobby) -> None:
@@ -42,8 +42,6 @@ class PenteController():
 
 
         # using turn builder create a useable turn 
-        created_turn = CatanTurnBuilder()
-        self.turn_log.append(created_turn)
 
         # use turn to update game state
         
