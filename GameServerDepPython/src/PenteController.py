@@ -4,14 +4,14 @@ An object which allows management
 
 from typing import List
 
+from AbstractGameController import AbstractGameController
 from GameLobby import Lobby
 from PenteModel import PenteGameModel, PenteTurnBuilder
 
-class PenteController():
+class PenteController(AbstractGameController):
     def __init__(self, model: PenteGameModel, lobby: Lobby) -> None:
 
         self.game_state = model
-        self.game_lobby = lobby
 
         self.turn_counter = 0
 

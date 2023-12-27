@@ -1,9 +1,10 @@
 
 
+
+
 class PenteGameModel():
     def __init__(self) -> None:
         self.game_state = None
-
 
 
 class PenteTurnBuilder():
