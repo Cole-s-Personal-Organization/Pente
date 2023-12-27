@@ -1,8 +1,1 @@
-# Generated files
-/target/
-
-Cargo.lock
-
-main
-
-.vscode
+target
