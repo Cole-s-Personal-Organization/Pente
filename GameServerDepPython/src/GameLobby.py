@@ -53,6 +53,7 @@ class Lobby():
     def get_num_players(self) -> int:
         return len(self.players)
     
+    
     def send_message_to_group(self, message: str):
         self.socketio.send(message)
 
@@ -111,15 +112,27 @@ class GamePool():
 
     def get_num_lobbies(self) -> int:
         return len(self.lobbies)
+    
+    def get_lobby_headers(self) -> List[dict]:
+        """Get all basic headline information about current running lobby"""
+        game_header_list = []
+        for lobby in self.lobbies:
+            game_header_list.append({
+                "lobby_name": lobby.lobby_name,
+                "selected_game": lobby.selected_game,
+                "host_name": lobby.lobby_host_player.player_name,
+                "num_players": lobby.get_num_players()
+            })
+        return game_header_list
+
+
 
     def destroy_lobby(self, lobby: Lobby):
         lobby.send_message_to_group("Lobby " + lobby.lobby_name + " shutting down")
 
         self.lobbies.remove(lobby)
     
-    def create_lobby(self):
-        self.lobbies.append(Lobby(
-            self.socketio, 
-        ))
+    def create_lobby(self, new_lobby: Lobby):
+        self.lobbies.append(new_lobby)
 
 
