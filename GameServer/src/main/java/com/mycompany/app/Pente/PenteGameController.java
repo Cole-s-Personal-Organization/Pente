@@ -10,7 +10,11 @@ public class PenteGameController {
         PenteGameSettings settings,
         PenteGameBoardModel model
     ) {
-        this.gameSettings = settings;
+        if (this.gameSettings != null) {
+            this.gameSettings = settings;
+        } else {
+            this.gameSettings = new PenteGameSettings.PenteGameSettingsBuilder().setToDefaultValues().build();
+        }
         this.model = model;
 
         this.playerCaptures = new int[8];
