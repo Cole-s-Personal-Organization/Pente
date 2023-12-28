@@ -25,10 +25,10 @@ public class MyWebServer {
                 System.out.println("Connection established with " + clientSocket.getInetAddress());
 
                 // Create a new thread to handle the client request
-                MyWebServerRunnable clientMessageHandler = new MyWebServerRunnable();
-                Thread clientThread = new Thread(clientMessageHandler);
+                // MyWebServerRunnable clientMessageHandler = new MyWebServerRunnable();
+                // Thread clientThread = new Thread(clientMessageHandler);
                 // Thread clientThread = new Thread(() -> handleClientRequest(clientSocket));
-                clientThread.start();
+                // clientThread.start();
             }
         } catch (IOException e) {
             e.printStackTrace();

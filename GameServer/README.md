@@ -14,3 +14,7 @@ This project will be utilizing a maven build system, standard maven commands wil
 
             java -cp target/GameServer-1.0-SNAPSHOT.jar com.mycompany.app.App
 
+- Run Tests
+    
+        mvn test
+
