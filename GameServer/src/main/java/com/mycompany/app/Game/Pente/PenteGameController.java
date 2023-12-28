@@ -1,9 +1,8 @@
 package main.java.com.mycompany.app.Pente;
-
 import java.util.HashMap;
 
 public class PenteGameController {
-    private PenteGameSettings gameSettings; 
+    private PenteGameSettings gameSettings;
     private PenteGameBoardModel model;
 
     private int[] playerCaptures;
@@ -19,30 +18,27 @@ public class PenteGameController {
         }
         this.model = model;
 
-        this.playerCaptures = new int[8];
+        this.playerCaptures = new int[2];
     }
 
-    public void takePlayerTurn() {
-
-        boolean gameWon = this.isGameWon();
-        
-        // HashMap<String, String> gameWonMap = new HashMap<>();
-        // gameWonMap.put(null, null) 
-    }
-
-    private boolean isGameWon() {
-        boolean winByInRow = this.checkConsecutiveInRowWinCond();
+    /**
+     * takePlayerTurn takes a player's turn and and and
+     * @param turn object containing the player's chosen action on their turn
+     */
+    public void takePlayerTurn(PenteTurn turn) {
+        model.setMove(turn);
+        this.playerCaptures[turn.playerNumber] += model.removeCaptured(turn);
         boolean winByCaptures = this.checkCaptureWinCon();
-        
-        return winByCaptures || winByInRow; // placeholder
-     }
-
-    private boolean checkConsecutiveInRowWinCond() {
-        return false;
-    }  
-
-    private boolean checkCaptureWinCon() {
-        return false;
+        boolean winByConsecutive = model.checkConsecutiveWinCon();
+        // if(gameWon) send a message to the lobby containing the winner and wincon and the turn
+        // else send turn to all, and prompt the next player for their turn
     }
-    
+
+    private boolean checkConsecutiveWinCon(PenteTurn turn) {
+        return model.checkNInARow(turn, this.gameSettings.numInARowToWin);
+    }
+
+    private boolean checkCaptureWinCon(PenteTurn turn) {
+        return (playerCaptures[turn.playerNumber] >= settings.capturesToWin);
+    }
 }

@@ -8,10 +8,10 @@ import main.java.com.mycompany.app.WebServer.MyWebServer;
  * Hello world!
  *
  */
-public class App 
+public class App
 {
     public static void main( String[] args )
-    {   
+    {
         // parse system args
         if (args.length != 1) {
             System.out.println("Number of arguments incorrect.");
@@ -23,7 +23,7 @@ public class App
 
         // MyWebServer webServer = new MyWebServer();
 
-        
+
         PenteGameBoardModel model = new PenteGameBoardModel();
         // PenteGameController controller = new PenteGameController(null, model);
 

@@ -11,6 +11,10 @@ from PenteModel import PenteGameModel, PenteTurnBuilder
 class PenteController(AbstractGameController):
     def __init__(self, model: PenteGameModel, lobby: Lobby) -> None:
 
+        self.num_in_a_row_to_win = 5
+        self.captures_to_win = 5
+        self.player_captures = [0] * num_players
+
         self.game_state = model
 
         self.turn_counter = 0
@@ -20,7 +24,10 @@ class PenteController(AbstractGameController):
 
         self.turn_log: List[PenteTurnBuilder] = []
 
-    
+    def is_won(self, turn: PenteTurnBuilder) -> bool:
+        self.check_consecutive_in_row_win_con(turn)
+        self.check_capture_win_con()
+
     def run(self):
         """
         """

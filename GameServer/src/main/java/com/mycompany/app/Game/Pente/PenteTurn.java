@@ -16,7 +16,7 @@ public class PenteTurn {
         this.playerNumber = builder.playerNumber;
         this.isTurnOneAction = builder.isTurnOneAction;
 
-    } 
+    }
 
     public static class PenteTurnBuilder {
         // required
