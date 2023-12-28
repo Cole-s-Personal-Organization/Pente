@@ -25,12 +25,6 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
-    <!-- JSON -->
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20210307</version> <!-- Use the latest version -->
-    </dependency>
   </dependencies>
 
   <build>

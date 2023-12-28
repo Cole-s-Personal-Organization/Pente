@@ -6,72 +6,71 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.*;
 
-import org.json.JSONObject;
 
 public class MyWebServer {
     private final int portNumber;
+
+    private static List<Socket> connectedClients = new ArrayList<>();
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
     }
 
     public void start() {
-        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
+        try (ServerSocket serverSocket = new ServerSocket(this.portNumber)) {
             System.out.println("Server is listening on port " + portNumber);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Connection established with " + clientSocket.getInetAddress());
 
+                connectedClients.add(clientSocket);
+
                 // Create a new thread to handle the client request
-                // MyWebServerRunnable clientMessageHandler = new MyWebServerRunnable();
-                // Thread clientThread = new Thread(clientMessageHandler);
-                // Thread clientThread = new Thread(() -> handleClientRequest(clientSocket));
-                // clientThread.start();
+                ClientRunnable clientMessageHandler = new ClientRunnable(clientSocket);
+                Thread clientThread = new Thread(clientMessageHandler);
+                clientThread.start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void handleClientRequest(Socket clientSocket) {
-        try (
-            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            OutputStream outputStream = clientSocket.getOutputStream()
-        ) {
-            // Read the incoming message
-            String request = reader.readLine();
-            System.out.println("Received message: " + request);
+    
 
-            // Send a response back to the client
-            String response = "Hello from the server!";
-            outputStream.write(response.getBytes());
+    public class ClientRunnable implements Runnable {
+        private final Socket clientSocket;
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                // Close the client socket
-                clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        public ClientRunnable(Socket clientSocket) {
+            this.clientSocket = clientSocket;
         }
-    }
 
-    public class MyWebServerRunnable implements Runnable {
-        private String data;
-
-        public MyWebServerRunnable(String requestData) {
-            this.data = requestData;
-
-        }
 
         @Override
         public void run() {
-            // TODO Auto-generated method stub
-            System.out.println("test from runnable");
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()))) {
+                String rawInput = reader.readLine();
+                System.out.println(rawInput);
+                // JSONObject deserializedJson;
+                
+                // try {
+                //     deserializedJson = new JSONObject(rawInput);
+                //     System.out.println(deserializedJson.toString(2));
+                // } catch (JSONException e) {
+                //     e.printStackTrace();
+                // }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    // Close the client socket
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

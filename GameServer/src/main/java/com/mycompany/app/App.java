@@ -19,15 +19,8 @@ public class App
         }
         int portNumber = Integer.parseInt(args[0]);
 
-        System.out.println( "Game Server Starting up..." );
+        MyWebServer webServer = new MyWebServer(portNumber);
 
-        // MyWebServer webServer = new MyWebServer();
-
-        PenteGameBoardModel model = new PenteGameBoardModel();
-        // PenteGameController controller = new PenteGameController(null, model);
-
-        // MyWebServer webServer = new MyWebServer(portNumber);
-
-        System.out.println(model.toString());
+        webServer.start();
     }
 }
