@@ -41,5 +41,11 @@ public class PenteTurn {
         public PenteTurn build() {
             return new PenteTurn(this);
         }
+
+        public static void main(String[] args) {
+            PenteTurn turn = new PenteTurn.PenteTurnBuilder(1, 1, 1)
+                .setTurnOneAction(true)
+                .build();
+        }
     }
 }

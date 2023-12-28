@@ -1,5 +1,7 @@
 package main.java.com.mycompany.app.Pente;
 
+import java.util.HashMap;
+
 public class PenteGameController {
     private PenteGameSettings gameSettings; 
     private PenteGameBoardModel model;
@@ -23,6 +25,9 @@ public class PenteGameController {
     public void takePlayerTurn() {
 
         boolean gameWon = this.isGameWon();
+        
+        // HashMap<String, String> gameWonMap = new HashMap<>();
+        // gameWonMap.put(null, null) 
     }
 
     private boolean isGameWon() {

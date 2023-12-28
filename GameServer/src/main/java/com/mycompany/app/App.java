@@ -25,10 +25,10 @@ public class App
 
         
         PenteGameBoardModel model = new PenteGameBoardModel();
-        PenteGameController controller = new PenteGameController(null, model);
+        // PenteGameController controller = new PenteGameController(null, model);
 
-        MyWebServer webServer = new MyWebServer(portNumber);
+        // MyWebServer webServer = new MyWebServer(portNumber);
 
-        System.err.println(model.toString());
+        System.out.println(model.toString());
     }
 }
