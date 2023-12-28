@@ -16,11 +16,12 @@ public class PenteGameBoardModel {
             }
         }
     }
-
+    // TODO check for captures
     public void setMove(PenteTurn turn) {
         this.checkMove(turn);
+        this.gameBoard[turn.posY][turn.posX] = turn.playerNumber;
     }
-
+    // TODO check if a move is valid
     private boolean checkMove(PenteTurn turn) {
         return false;
     }
@@ -53,13 +54,13 @@ public class PenteGameBoardModel {
                 .trim()
                 .concat("\n")
         );
-        
+
         for (int i = 0; i < colLetters.length; i++) {
             int[] row = this.gameBoard[i];
 
             buildString = buildString // the dashed line above each row
                 .concat(indent)
-                .concat("----".repeat(row.length) 
+                .concat("----".repeat(row.length)
                     .concat("-"))
                 .concat("\n");
 
@@ -79,7 +80,7 @@ public class PenteGameBoardModel {
         }
         buildString = buildString // the dashed line above each row
                 .concat(indent)
-                .concat("----".repeat(this.gameBoard[0].length) 
+                .concat("----".repeat(this.gameBoard[0].length)
                     .concat("-"))
                 .concat("\n");
         return buildString;
