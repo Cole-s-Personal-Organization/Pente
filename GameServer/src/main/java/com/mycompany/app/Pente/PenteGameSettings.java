@@ -13,17 +13,20 @@ public class PenteGameSettings {
         private int numInARowToWin;
         private int capturesToWin;
 
-        public PenteGameSettingsBuilder() {
+        public PenteGameSettingsBuilder setToDefaultValues() {
             this.numInARowToWin = 5;
             this.capturesToWin = 5;
+            return this;
         }
         
-        public void setCapturesToWin(int capturesToWin) {
+        public PenteGameSettingsBuilder setCapturesToWin(int capturesToWin) {
             this.capturesToWin = capturesToWin;
+            return this;
         }
 
-        public void setNumInARowToWin(int numInARowToWin) {
+        public PenteGameSettingsBuilder setNumInARowToWin(int numInARowToWin) {
             this.numInARowToWin = numInARowToWin;
+            return this;
         }
 
         public PenteGameSettings build() {
