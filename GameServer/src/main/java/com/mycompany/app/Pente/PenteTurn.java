@@ -33,8 +33,9 @@ public class PenteTurn {
             this.playerNumber = playerNumber;
         }
 
-        public void setTurnOneAction(boolean isTurnOneAction) {
+        public PenteTurnBuilder setTurnOneAction(boolean isTurnOneAction) {
             this.isTurnOneAction = isTurnOneAction;
+            return this;
         }
 
         public PenteTurn build() {
