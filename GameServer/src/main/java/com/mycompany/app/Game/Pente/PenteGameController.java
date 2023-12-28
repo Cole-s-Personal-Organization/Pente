@@ -1,4 +1,4 @@
-package main.java.com.mycompany.app.Pente;
+package com.mycompany.app.Game.Pente;
 import java.util.HashMap;
 
 public class PenteGameController {
@@ -25,20 +25,20 @@ public class PenteGameController {
      * takePlayerTurn takes a player's turn and and and
      * @param turn object containing the player's chosen action on their turn
      */
-    public void takePlayerTurn(PenteTurn turn) {
-        model.setMove(turn);
-        this.playerCaptures[turn.playerNumber] += model.removeCaptured(turn);
-        boolean winByCaptures = this.checkCaptureWinCon();
-        boolean winByConsecutive = model.checkConsecutiveWinCon();
-        // if(gameWon) send a message to the lobby containing the winner and wincon and the turn
-        // else send turn to all, and prompt the next player for their turn
-    }
+    // public void takePlayerTurn(PenteTurn turn) {
+    //     model.setMove(turn);
+    //     this.playerCaptures[turn.playerNumber] += model.removeCaptured(turn);
+    //     boolean winByCaptures = this.checkCaptureWinCon(turn);
+    //     // boolean winByConsecutive = model.checkConsecutiveWinCon(turn);
+    //     // if(gameWon) send a message to the lobby containing the winner and wincon and the turn
+    //     // else send turn to all, and prompt the next player for their turn
+    // }
 
-    private boolean checkConsecutiveWinCon(PenteTurn turn) {
-        return model.checkNInARow(turn, this.gameSettings.numInARowToWin);
-    }
+    // private boolean checkConsecutiveWinCon(PenteTurn turn) {
+    //     return model.checkNInARow(turn, this.gameSettings.numInARowToWin);
+    // }
 
-    private boolean checkCaptureWinCon(PenteTurn turn) {
-        return (playerCaptures[turn.playerNumber] >= settings.capturesToWin);
-    }
+    // private boolean checkCaptureWinCon(PenteTurn turn) {
+    //     return (playerCaptures[turn.playerNumber] >= this.gameSettings.capturesToWin);
+    // }
 }

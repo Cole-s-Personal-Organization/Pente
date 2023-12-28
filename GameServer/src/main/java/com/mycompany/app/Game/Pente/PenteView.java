@@ -1,4 +1,4 @@
-package main.java.com.mycompany.app.Pente;
+package com.mycompany.app.Game.Pente;
 
 public class PenteView {
     

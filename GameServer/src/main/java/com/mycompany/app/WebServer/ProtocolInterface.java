@@ -1,7 +1,7 @@
 /**
  * Dictates the behavior of protocol objects
  */
-package main.java.com.mycompany.app.WebServer;
+package com.mycompany.app.WebServer;
 
 public interface ProtocolInterface {
     // public 

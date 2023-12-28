@@ -1,8 +1,8 @@
 package com.mycompany.app;
 
-import main.java.com.mycompany.app.Pente.PenteGameBoardModel;
-import main.java.com.mycompany.app.Pente.PenteGameController;
-import main.java.com.mycompany.app.WebServer.MyWebServer;
+import com.mycompany.app.Game.Pente.PenteGameBoardModel;
+import com.mycompany.app.Game.Pente.PenteGameController;
+import com.mycompany.app.WebServer.MyWebServer;
 
 /**
  * Hello world!
@@ -22,7 +22,6 @@ public class App
         System.out.println( "Game Server Starting up..." );
 
         // MyWebServer webServer = new MyWebServer();
-
 
         PenteGameBoardModel model = new PenteGameBoardModel();
         // PenteGameController controller = new PenteGameController(null, model);

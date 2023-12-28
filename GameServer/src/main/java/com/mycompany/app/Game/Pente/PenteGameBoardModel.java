@@ -1,18 +1,18 @@
-package main.java.com.mycompany.app.Pente;
+package com.mycompany.app.Game.Pente;
 
 import java.util.Arrays;
 
 public class PenteGameBoardModel {
-    private int[][] gameBoard;
+    private PenteBoardIdentifierEnum[][] gameBoard;
 
     public PenteGameBoardModel() {
         int cols = 19;
         int rows = 19;
-        gameBoard = new int[rows][cols];
+        gameBoard = new PenteBoardIdentifierEnum[rows][cols];
 
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                gameBoard[i][j] = 0;
+                gameBoard[i][j] = PenteBoardIdentifierEnum.EMPTY;
             }
         }
     }
@@ -33,6 +33,14 @@ public class PenteGameBoardModel {
 
     public boolean checkNInARow(PenteTurn turn, int n) {
         return false;
+    }
+
+    // right now getters are being used for testing purposes
+    public PenteBoardIdentifierEnum getGameBoardValueAtPosition(int posX, int posY) {
+        return this.gameBoard[posY][posX];
+    }
+    public PenteBoardIdentifierEnum[][] getGameBoard() {
+        return gameBoard;
     }
 
     @Override
@@ -65,7 +73,7 @@ public class PenteGameBoardModel {
         );
 
         for (int i = 0; i < colLetters.length; i++) {
-            int[] row = this.gameBoard[i];
+            PenteBoardIdentifierEnum[] row = this.gameBoard[i];
 
             buildString = buildString // the dashed line above each row
                 .concat(indent)
@@ -77,7 +85,7 @@ public class PenteGameBoardModel {
                 .concat(String.valueOf(i))
                 .concat(indent.substring(String.valueOf(i).length()));
 
-            for (int rowValue : row) { // the numbers and their dividers
+            for (PenteBoardIdentifierEnum rowValue : row) { // the numbers and their dividers
                 buildString = buildString
                     .concat("| ")
                     .concat(String.valueOf(rowValue))
