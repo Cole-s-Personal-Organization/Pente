@@ -6,6 +6,6 @@ package com.mycompany.app.WebServer;
 
 public interface ProtocolInterface {
     // emit json message to all listeners within 
-    public void emitToAll(String jsonMessage);
+    // public void emitToAll(String jsonMessage);
     // public 
 }
