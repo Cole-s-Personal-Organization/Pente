@@ -7,5 +7,7 @@ import org.junit.Test;
 public class PenteBoardGameModelTest {
     
     @Test
-    public void construct
+    public void constructGameBoard() {
+        
+    }
 }
