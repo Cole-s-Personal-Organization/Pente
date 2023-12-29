@@ -27,21 +27,18 @@ public class PenteGameController {
      */
     public void takePlayerTurn(PenteTurn turn) {
         model.setMove(turn);
-        this.checkForCaptures(turn);
-        boolean winByConsecutive = this.checkConsecutiveWinCon();
+        this.playerCaptures[turn.platerNumber] += model.removeCaptured(turn);
         boolean winByCaptures = this.checkCaptureWinCon();
-        // if(gameWon) send a message to the lobby containing the winner and wincon
+        boolean winByConsecutive = model.checkConsecutiveWinCon();
+        // if(gameWon) send a message to the lobby containing the winner and wincon and the turn
+        // else send turn to all, and prompt the next player for their turn
     }
 
-    private int checkForCaptures(PenteTurn turn) {
-        return 0;
+    private boolean checkConsecutiveWinCon(PenteTurn turn) {
+        return model.checkNInARow(turn, this.gameSettings.numInARowToWin);
     }
 
-    private boolean checkConsecutiveWinCon() {
-        return false;
-    }
-
-    private boolean checkCaptureWinCon() {
-        return false;
+    private boolean checkCaptureWinCon(PenteTurn turn) {
+        return (playerCaptures[turn.playerNumber] >= settings.capturesToWin);
     }
 }

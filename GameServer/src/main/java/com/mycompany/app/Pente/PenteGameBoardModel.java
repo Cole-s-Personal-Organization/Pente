@@ -26,6 +26,15 @@ public class PenteGameBoardModel {
         return false;
     }
 
+    public int removeCaptured(PenteTurn turn) {
+        int numCaptured = 0;
+        return numCaptured;
+    }
+
+    public boolean checkNInARow(PenteTurn turn, int n) {
+        return false;
+    }
+
     @Override
     public String toString() {
         String buildString = "";
