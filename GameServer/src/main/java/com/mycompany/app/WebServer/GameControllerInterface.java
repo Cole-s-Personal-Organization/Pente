@@ -1,5 +1,5 @@
-package com.mycompany.app.Game;
+package com.mycompany.app.WebServer;
 
-public interface GameInterface {
+public interface GameControllerInterface {
     
 }

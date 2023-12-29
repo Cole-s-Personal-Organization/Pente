@@ -34,7 +34,7 @@ public class GameLobby {
         } 
 
         // message to all within group that new user has joined
-        Message justJoinedMessage = new Message(lobbyHostUid);
+        // Message justJoinedMessage = new Message(lobbyHostUid);
         // this.connectedPlayers.
     }
 

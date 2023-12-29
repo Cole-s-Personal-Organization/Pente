@@ -12,13 +12,16 @@ import java.util.*;
 
 public class MyWebServer {
     private final int portNumber;
-
-    private Map<String, Set<ClientRunnable>> connectedClients = new HashMap<>();
+    private Map<String, Set<ClientInstance>> namespaceToClientsMap = new HashMap<String, Set<ClientInstance>>();
 
     private GamePool gamePool;
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
+
+        // by default, every user is connected to the "" namespace
+        namespaceToClientsMap.put("", new HashSet<ClientInstance>()); 
+
         this.gamePool = new GamePool();
     }
 
@@ -29,61 +32,99 @@ public class MyWebServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
 
-                // Create a new thread to handle the client request
-                ClientRunnable clientMessageHandler = new ClientRunnable(clientSocket);
-                connectedClients.add(clientSocket);
-                Thread clientThread = new Thread(clientMessageHandler);
-                clientThread.start();
+                ClientInstance clientInstance = new ClientInstance(clientSocket);
+                this.addClientToNamespace("", clientInstance);
+
+                clientInstance.start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public void addClientToNamespace(String namespace, ClientInstance client) {
+        this.namespaceToClientsMap.get(namespace).add(client);
+    }
+
+    public void removeClientFromNamespace(String namespace, ClientInstance client) {
+        this.namespaceToClientsMap.get(namespace).remove(client);
+    }
+
+    public void removeClientFromAllNamespaces(ClientInstance client) {
+
+    }
+
+    public void broadcastMessageInNamespace(String namespace, Message message) {
+
+    }
+
+    public void sendMessageToRecipientsInNamespace(String namespace, Message message, ClientInstance[] recipients) {
+        if (recipients.length > 0) {
+            
+        }
+    }
+
     
 
-    public class ClientRunnable implements Runnable {
+    public class ClientInstance extends Thread {
         private final Socket clientSocket;
-        private ArrayList<String> currentLobbies; 
+        private User associatedUserInfo;
 
-        public ClientRunnable(Socket clientSocket) {
+        public ClientInstance(Socket clientSocket) {
             this.clientSocket = clientSocket;
-            this.currentLobbies = new ArrayList<>();
+            this.associatedUserInfo = new User("", "");
         }
 
-        private void broadcastMessage(String[] namespaces, Message message) {
-            // for ( client : iterable) {
-                
+        /**
+         * Function for writing simplified response messages to a user after a message has been sent
+         * Generally follows standard HTTP Response codes for ease of use.
+         * @param responseCode
+         */
+        private void writeResponseMessage(int responseCode) {
+
+        }
+
+        private void handleMessage(String rawInputLine) {
+            System.out.println(rawInputLine);
+
+            try {
+                Message message = MessageHandler.parseMessage(rawInputLine);
+            } catch (Exception e) {
+                // send message to sender that their message just failed
+                if (e instanceof MessageHandler.InvalidMessageConstructionException) {
+                    writeResponseMessage(422); // unprocessable entity
+                }
+            }
+
+            writeResponseMessage(200);
+            
+
+            /**
+             * from this point we need to 
+             * 1. parse the string into a format which is readable to a message director (decides where the message needs to go)
+             * 2. identify what the intention of the message is
+             *  - is it a player turn
+             *  - is a player trying to join a lobby
+             *  - no action or not a allowed action?
+             *  - etc
+             * 3. data needs to be formated in a manner to allow it be taken in from its recipients
+             * 4. formatted data alters models
+             * 5. state is now changed, concerned parties now need to be made aware, notify 
+             */
+
+                // parse 
+            //  Message message = new Message(rawInputLine);
+
+            // determine what to build based on parsed message namespace
+
+            // switch(message.namespace) {
+            //     case "all":
+            //         return
+            //     case "pente"
             // }
         }
 
-        private void sendMessage(String message) {
-            try (PrintWriter writer = new PrintWriter(clientSocket.getOutputStream())) {
-                writer.println(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private void joinLobby(String lobby, ) {
-
-        }
-
-        private void leaveLobby(String lobbyName, ClientRunnable client) {
-            Set<ClientRunnable> clients = connectedClients.get(lobbyName);
-            if (clients != null) {
-                clients.remove(client);
-                if (clients.isEmpty()) {
-                    // Remove the lobby if there are no more clients
-                    connectedClients.remove(lobbyName);
-                } else {
-                    // message clients still in lobby that person has left
-                    // promote new host 
-
-                }
-            }
-        }
-
+        
         @Override
         public void run() {
             System.out.println("Connection established with " + this.clientSocket.getInetAddress());
@@ -92,32 +133,7 @@ public class MyWebServer {
                 String rawInputLine;
                 
                 while((rawInputLine = reader.readLine()) != null) {
-                    System.out.println(rawInputLine);
-
-                    /**
-                     * from this point we need to 
-                     * 1. parse the string into a format which is readable to a message director (decides where the message needs to go)
-                     * 2. identify what the intention of the message is
-                     *  - is it a player turn
-                     *  - is a player trying to join a lobby
-                     *  - no action or not a allowed action?
-                     *  - etc
-                     * 3. data needs to be formated in a manner to allow it be taken in from its recipients
-                     * 4. formatted data alters models
-                     * 5. state is now changed, concerned parties now need to be made aware, notify 
-                     */
-
-                     // parse 
-                     Message message = new Message(rawInputLine);
-
-                    // determine what to build based on parsed message namespace
-
-                    // switch(message.namespace) {
-                    //     case "all":
-                    //         return
-                    //     case "pente"
-                    // }
-                    
+                    this.handleMessage(rawInputLine);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
