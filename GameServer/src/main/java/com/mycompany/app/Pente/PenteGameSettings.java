@@ -1,8 +1,8 @@
 package main.java.com.mycompany.app.Pente;
 
 public class PenteGameSettings {
-    private int numInARowToWin;
-    private int capturesToWin;
+    public final int numInARowToWin;
+    public final int capturesToWin;
     
     private PenteGameSettings(PenteGameSettingsBuilder builder) {
         this.numInARowToWin = builder.numInARowToWin;
