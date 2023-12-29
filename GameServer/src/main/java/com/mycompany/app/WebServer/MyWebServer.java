@@ -85,16 +85,30 @@ public class MyWebServer {
         }
 
         private void handleMessage(String rawInputLine) {
-            System.out.println(rawInputLine);
+            Message message;
 
             try {
-                Message message = MessageHandler.parseMessage(rawInputLine);
+                message = MessageHandler.parseMessage(rawInputLine);
             } catch (Exception e) {
                 // send message to sender that their message just failed
                 if (e instanceof MessageHandler.InvalidMessageConstructionException) {
                     writeResponseMessage(422); // unprocessable entity
                 }
+                return;
             }
+
+            // use the namespace to route the message to it's protocol like an endpoint 
+            String namespace = message.namespace;
+            switch (namespace) {
+                case "":
+                    // default
+                    break;
+                default:
+                    // no such namespace, should never be reached
+                    writeResponseMessage(500);
+                    return;
+            }
+
 
             writeResponseMessage(200);
             

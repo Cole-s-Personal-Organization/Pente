@@ -5,17 +5,32 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class Message {
 
     public final String namespace;      // 
-    public final String action;         // tell the reciever how to handle data, this is also namespace/context dependent. e.g. update
+    public final MessageAction action;  // tell the reciever how to handle data, this is also namespace/context dependent. e.g. get, delete, update
     public final String[] recipientIds; // allow direct addresses to clients using their ids
     public final String senderId; 
     public final JsonNode data;         // any attached data to the message, UNPARSED, up to the reciever to make sense of it
+
+    public enum MessageAction {
+        GET,
+        POST,
+        PUT,
+        DELETE,
+        UPDATE
+    }
     
 
-    public Message(String namespace, String action, String senderId, String[] recipientIds, JsonNode data) {
+    public Message(String namespace, String action, String senderId, String[] recipientIds, JsonNode data) throws Exception {
         this.namespace = namespace;
-        this.action = action;
         this.senderId = senderId;
         this.recipientIds = recipientIds;
         this.data = data;
+
+        switch (action) {
+            case "GET":
+                this.action = MessageAction.GET;
+                break;
+            default:
+                break;
+        }
     } 
 }
