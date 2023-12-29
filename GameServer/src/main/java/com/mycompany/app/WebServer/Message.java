@@ -5,13 +5,19 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.mycompany.app.Game.Pente.PenteGameSettings;
+
 public class Message {
-    public final String namespace;
-    public final String action;
+    public String namespace;
+    public String action;
     // public final String data;
     // public final String sender;
 
     // public final String reciever;
+
+    public Message(MessageBuilder builder) {
+
+    }
 
     public Message(String rawMessage) {
         HashMap<String, Object> map = parseJson(rawMessage);
@@ -88,5 +94,31 @@ public class Message {
         }
 
         return resultArray;
+    }
+
+
+    public static class MessageBuilder {
+        private int numInARowToWin;
+        private int capturesToWin;
+
+        public MessageBuilder setToDefaultValues() {
+            this.numInARowToWin = 5;
+            this.capturesToWin = 5;
+            return this;
+        }
+        
+        public MessageBuilder setCapturesToWin(int capturesToWin) {
+            this.capturesToWin = capturesToWin;
+            return this;
+        }
+
+        public MessageBuilder setNumInARowToWin(int numInARowToWin) {
+            this.numInARowToWin = numInARowToWin;
+            return this;
+        }
+
+        public Message build() {
+            return new Message(this);
+        }
     }
 }

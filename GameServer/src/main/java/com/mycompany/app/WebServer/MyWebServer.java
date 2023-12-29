@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -12,10 +13,13 @@ import java.util.*;
 public class MyWebServer {
     private final int portNumber;
 
-    private static List<Socket> connectedClients = new ArrayList<>();
+    private Map<String, Set<ClientRunnable>> connectedClients = new HashMap<>();
+
+    private GamePool gamePool;
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
+        this.gamePool = new GamePool();
     }
 
     public void start() {
@@ -25,10 +29,9 @@ public class MyWebServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
 
-                connectedClients.add(clientSocket);
-
                 // Create a new thread to handle the client request
                 ClientRunnable clientMessageHandler = new ClientRunnable(clientSocket);
+                connectedClients.add(clientSocket);
                 Thread clientThread = new Thread(clientMessageHandler);
                 clientThread.start();
             }
@@ -41,11 +44,45 @@ public class MyWebServer {
 
     public class ClientRunnable implements Runnable {
         private final Socket clientSocket;
+        private ArrayList<String> currentLobbies; 
 
         public ClientRunnable(Socket clientSocket) {
             this.clientSocket = clientSocket;
+            this.currentLobbies = new ArrayList<>();
         }
 
+        private void broadcastMessage(String[] namespaces, Message message) {
+            // for ( client : iterable) {
+                
+            // }
+        }
+
+        private void sendMessage(String message) {
+            try (PrintWriter writer = new PrintWriter(clientSocket.getOutputStream())) {
+                writer.println(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void joinLobby(String lobby, ) {
+
+        }
+
+        private void leaveLobby(String lobbyName, ClientRunnable client) {
+            Set<ClientRunnable> clients = connectedClients.get(lobbyName);
+            if (clients != null) {
+                clients.remove(client);
+                if (clients.isEmpty()) {
+                    // Remove the lobby if there are no more clients
+                    connectedClients.remove(lobbyName);
+                } else {
+                    // message clients still in lobby that person has left
+                    // promote new host 
+
+                }
+            }
+        }
 
         @Override
         public void run() {
@@ -74,6 +111,12 @@ public class MyWebServer {
                      Message message = new Message(rawInputLine);
 
                     // determine what to build based on parsed message namespace
+
+                    // switch(message.namespace) {
+                    //     case "all":
+                    //         return
+                    //     case "pente"
+                    // }
                     
                 }
             } catch (IOException e) {
