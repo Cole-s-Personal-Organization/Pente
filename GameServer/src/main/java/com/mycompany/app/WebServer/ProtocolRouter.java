@@ -1,5 +1,5 @@
 
-package main.java.com.mycompany.app.WebServer;
+package com.mycompany.app.WebServer;
 
 public class ProtocolRouter {
 

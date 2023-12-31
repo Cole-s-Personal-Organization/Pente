@@ -1,11 +1,11 @@
 
-package main.java.com.mycompany.app.Pente;
+package com.mycompany.app.Game.Pente;
 
 public class PenteTurn {
     // required
-    private int posX;
-    private int posY;
-    private int playerNumber;
+    public final int posX;
+    public final int posY;
+    public final PenteBoardIdentifierEnum playerNumber;
 
     // optional
     private boolean isTurnOneAction;
@@ -22,12 +22,12 @@ public class PenteTurn {
         // required
         private int posX;
         private int posY;
-        private int playerNumber;
+        private PenteBoardIdentifierEnum playerNumber;
 
         // optional
         private boolean isTurnOneAction;
 
-        public PenteTurnBuilder(int posX, int posY, int playerNumber) {
+        public PenteTurnBuilder(int posX, int posY, PenteBoardIdentifierEnum playerNumber) {
             this.posX = posX;
             this.posY = posY;
             this.playerNumber = playerNumber;

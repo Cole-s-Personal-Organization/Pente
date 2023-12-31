@@ -1,4 +1,4 @@
-package main.java.com.mycompany.app.WebServer;
+package com.mycompany.app.WebServer;
 
 import java.io.IOException;
 import java.io.BufferedReader;
@@ -6,72 +6,87 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.*;
 
-import org.json.JSONObject;
 
 public class MyWebServer {
     private final int portNumber;
+
+    private static List<Socket> connectedClients = new ArrayList<>();
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
     }
 
     public void start() {
-        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
+        try (ServerSocket serverSocket = new ServerSocket(this.portNumber)) {
             System.out.println("Server is listening on port " + portNumber);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Connection established with " + clientSocket.getInetAddress());
+
+                connectedClients.add(clientSocket);
 
                 // Create a new thread to handle the client request
-                // MyWebServerRunnable clientMessageHandler = new MyWebServerRunnable();
-                // Thread clientThread = new Thread(clientMessageHandler);
-                // Thread clientThread = new Thread(() -> handleClientRequest(clientSocket));
-                // clientThread.start();
+                ClientRunnable clientMessageHandler = new ClientRunnable(clientSocket);
+                Thread clientThread = new Thread(clientMessageHandler);
+                clientThread.start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void handleClientRequest(Socket clientSocket) {
-        try (
-            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            OutputStream outputStream = clientSocket.getOutputStream()
-        ) {
-            // Read the incoming message
-            String request = reader.readLine();
-            System.out.println("Received message: " + request);
+    
 
-            // Send a response back to the client
-            String response = "Hello from the server!";
-            outputStream.write(response.getBytes());
+    public class ClientRunnable implements Runnable {
+        private final Socket clientSocket;
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                // Close the client socket
-                clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        public ClientRunnable(Socket clientSocket) {
+            this.clientSocket = clientSocket;
         }
-    }
 
-    public class MyWebServerRunnable implements Runnable {
-        private String data;
-
-        public MyWebServerRunnable(String requestData) {
-            this.data = requestData;
-
-        }
 
         @Override
         public void run() {
-            // TODO Auto-generated method stub
-            System.out.println("test from runnable");
+            System.out.println("Connection established with " + this.clientSocket.getInetAddress());
+
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(this.clientSocket.getInputStream()))) {
+                String rawInputLine;
+                
+                while((rawInputLine = reader.readLine()) != null) {
+                    System.out.println(rawInputLine);
+
+                    /**
+                     * from this point we need to 
+                     * 1. parse the string into a format which is readable to a message director (decides where the message needs to go)
+                     * 2. identify what the intention of the message is
+                     *  - is it a player turn
+                     *  - is a player trying to join a lobby
+                     *  - no action or not a allowed action?
+                     *  - etc
+                     * 3. data needs to be formated in a manner to allow it be taken in from its recipients
+                     * 4. formatted data alters models
+                     * 5. state is now changed, concerned parties now need to be made aware, notify 
+                     */
+
+                     // parse 
+                     Message message = new Message(rawInputLine);
+
+                    // determine what to build based on parsed message namespace
+                    
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    // Close the client socket
+                    System.out.println("Connection closed with " + this.clientSocket.getInetAddress());
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
