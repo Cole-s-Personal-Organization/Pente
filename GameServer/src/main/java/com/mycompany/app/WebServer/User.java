@@ -21,4 +21,9 @@ public class User {
     public String toString() {
         return displayName;
     }
+
+    @Override
+    public int hashCode() {
+        return (int)(userId.hashCode() * displayName.hashCode());
+    }
 }

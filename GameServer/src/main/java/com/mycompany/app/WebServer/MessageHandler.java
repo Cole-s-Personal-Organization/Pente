@@ -43,6 +43,7 @@ public class MessageHandler {
         }
 
         JsonNode extractedNamespace = messageNode.get("namespace");
+        JsonNode extractedEndpoint = messageNode.get("endpoint");
         JsonNode extractedSenderId = messageNode.get("senderId");
         JsonNode extractedRecipientList = messageNode.get("recipients");
         JsonNode extractedAction = messageNode.get("action");
@@ -52,6 +53,9 @@ public class MessageHandler {
         String namespace = (extractedNamespace != null) 
             ? (removeQuotesFromStringCastedJson(extractedNamespace.toString())) 
             : (""); // default to empty namespace 
+        String endpoint = (extractedEndpoint != null) 
+            ? (removeQuotesFromStringCastedJson(extractedEndpoint.toString())) 
+            : (""); // default to empty endpoint
         String action = (extractedAction != null) 
             ? (removeQuotesFromStringCastedJson(extractedAction.toString())) 
             : (null); 
@@ -74,7 +78,7 @@ public class MessageHandler {
             throw new InvalidMessageConstructionException("Error: missing " + missingAttributeString + " attribute in raw message. Cannot construct Message object.");
         }
         
-        return new Message(namespace, action, senderId, recipientList, extractedData);
+        return new Message(namespace, endpoint, action, senderId, recipientList, extractedData);
     }
 
     public static JsonNode messageToJson(Message message) {

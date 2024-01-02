@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.mycompany.app.WebServer.Message;
 import com.mycompany.app.WebServer.MessageHandler;
+import com.mycompany.app.WebServer.Message.MessageAction;
 import com.mycompany.app.WebServer.MessageHandler.InvalidMessageConstructionException;
 
 public class MessageHandlerTest {
@@ -44,7 +45,7 @@ public class MessageHandlerTest {
     @Test
     public void testParseMessage() {
         // Test case with a valid message
-        String validMessage = "{\"namespace\":\"ns\",\"senderId\":\"sender123\",\"recipients\":[\"recipient1\",\"recipient2\"],\"action\":\"action123\",\"data\":\"some data\"}";
+        String validMessage = "{\"namespace\":\"ns\",\"endpoint\":\"endpoint\",\"senderId\":\"sender123\",\"recipients\":[\"recipient1\",\"recipient2\"],\"action\":\"GET\",\"data\":\"some data\"}";
         Message validParsedMessage = null;
 
         try { // ideally there will be no exception, data will be returned
@@ -55,15 +56,16 @@ public class MessageHandlerTest {
 
         assertNotNull(validParsedMessage);
         assertEquals("ns", validParsedMessage.namespace);
+        assertEquals("endpoint", validParsedMessage.endpoint);
         assertEquals("sender123", validParsedMessage.senderId);
         assertArrayEquals(new String[]{"recipient1", "recipient2"}, validParsedMessage.recipientIds);
-        assertEquals("action123", validParsedMessage.action);
+        assertEquals(MessageAction.GET, validParsedMessage.action);
         assertEquals(new TextNode("some data"), validParsedMessage.data);
     }
 
     @Test 
     public void testParseMissingSenderId() {
-        String missingSenderIdMessage = "{\"namespace\":\"ns\",\"recipients\":[\"recipient1\"],\"action\":\"action123\",\"data\":\"some data\"}";
+        String missingSenderIdMessage = "{\"namespace\":\"ns\",\"endpoint\":\"endpoint\",\"recipients\":[\"recipient1\",\"recipient2\"],\"action\":\"GET\",\"data\":\"some data\"}";
         try {
             MessageHandler.parseMessage(missingSenderIdMessage);
             fail("Expected InvalidMessageConstructionException");

@@ -9,20 +9,18 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
+import com.mycompany.app.WebServer.Namespaces.BaseNamespace;
+import com.mycompany.app.WebServer.Namespaces.GroupNamespace;
+
 
 public class MyWebServer {
     private final int portNumber;
-    private Map<String, Set<ClientInstance>> namespaceToClientsMap = new HashMap<String, Set<ClientInstance>>();
-
-    private GamePool gamePool;
+    
+    private BaseNamespace baseNamespace = new BaseNamespace();
+    private Map<String, GroupNamespace> groupNamespaces = new HashMap<>();
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
-
-        // by default, every user is connected to the "" namespace
-        namespaceToClientsMap.put("", new HashSet<ClientInstance>()); 
-
-        this.gamePool = new GamePool();
     }
 
     public void start() {
@@ -33,7 +31,7 @@ public class MyWebServer {
                 Socket clientSocket = serverSocket.accept();
 
                 ClientInstance clientInstance = new ClientInstance(clientSocket);
-                this.addClientToNamespace("", clientInstance);
+                this.baseNamespace.connectClient(clientInstance); // every client will be connected to the base namespace so long as they're online
 
                 clientInstance.start();
             }
@@ -41,29 +39,6 @@ public class MyWebServer {
             e.printStackTrace();
         }
     }
-
-    public void addClientToNamespace(String namespace, ClientInstance client) {
-        this.namespaceToClientsMap.get(namespace).add(client);
-    }
-
-    public void removeClientFromNamespace(String namespace, ClientInstance client) {
-        this.namespaceToClientsMap.get(namespace).remove(client);
-    }
-
-    public void removeClientFromAllNamespaces(ClientInstance client) {
-
-    }
-
-    public void broadcastMessageInNamespace(String namespace, Message message) {
-
-    }
-
-    public void sendMessageToRecipientsInNamespace(String namespace, Message message, ClientInstance[] recipients) {
-        if (recipients.length > 0) {
-            
-        }
-    }
-
     
 
     public class ClientInstance extends Thread {
@@ -73,6 +48,10 @@ public class MyWebServer {
         public ClientInstance(Socket clientSocket) {
             this.clientSocket = clientSocket;
             this.associatedUserInfo = new User("", "");
+        }
+
+        public User getAssociatedUserInfo() {
+            return associatedUserInfo;
         }
 
         /**
@@ -111,31 +90,6 @@ public class MyWebServer {
 
 
             writeResponseMessage(200);
-            
-
-            /**
-             * from this point we need to 
-             * 1. parse the string into a format which is readable to a message director (decides where the message needs to go)
-             * 2. identify what the intention of the message is
-             *  - is it a player turn
-             *  - is a player trying to join a lobby
-             *  - no action or not a allowed action?
-             *  - etc
-             * 3. data needs to be formated in a manner to allow it be taken in from its recipients
-             * 4. formatted data alters models
-             * 5. state is now changed, concerned parties now need to be made aware, notify 
-             */
-
-                // parse 
-            //  Message message = new Message(rawInputLine);
-
-            // determine what to build based on parsed message namespace
-
-            // switch(message.namespace) {
-            //     case "all":
-            //         return
-            //     case "pente"
-            // }
         }
 
         

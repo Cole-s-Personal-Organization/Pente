@@ -1,8 +1,13 @@
-package com.mycompany.app.WebServer.Protocols;
+package com.mycompany.app.WebServer.Namespaces;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.mycompany.app.WebServer.Message;
+import com.mycompany.app.WebServer.MyWebServer.ClientInstance;
 
-public class BaseProtocol implements ProtocolInterface {
+public class GroupNamespace extends AbstractNamespace {
+    
 
     @Override
     public int handleMessage(Message message) {
