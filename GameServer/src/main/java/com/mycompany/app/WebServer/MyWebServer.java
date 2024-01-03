@@ -58,69 +58,6 @@ public class MyWebServer {
             e.printStackTrace();
         }
     }
-
-    /**
-     * The default protocol that handles any requests within the base namespace
-     * @param message
-     * @throws Exception
-     */
-    private void baseProtocol(Message message) throws Exception {
-        switch (message.endpoint) {
-            
-            case "chat/":
-                break;
-
-
-            case "namespace/<namespace_id>/join": // 
-                break;
-        
-            default:
-                throw new Exception("Invalid endpoint passed to router function.");
-        }
-    }
-
-    
-    private void penteProtocol(Message message) throws Exception {
-        switch (message.endpoint) {
-            case "":
-                break;
-        
-            default:
-                throw new Exception("Invalid endpoint passed to router function.");
-        }
-    }
-
-
-    /**
-     * Send the message to the appropriate protocol based off namespace
-     * @param message
-     */
-    private void routeMessageByNamespace(Message message) throws Exception {
-        switch (message.namespace) {
-            case "":
-                break;
-        
-            default:
-                throw new Exception("Invalid namespace passed to router function.");
-        }
-    }
-
-    /**
-     * Insert Namespace object into map.
-     * Random uuid used
-     * @param namespace
-     */
-    private void insertNamespace(Namespace namespace) {
-        
-
-        this.namespaceIdToNamespaceSetMap.put(newNamespaceId, namespace);
-    }
-
-    private void removeNamespaceById(UUID namespaceId) {
-        this.namespaceIdToNamespaceSetMap.remove(namespaceId);
-    }
-
-    
     
 
     public class ClientInstance extends Thread {

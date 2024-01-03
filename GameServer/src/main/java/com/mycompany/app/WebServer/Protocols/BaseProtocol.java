@@ -25,6 +25,8 @@ public class BaseProtocol implements ProtocolInterface {
 
             case "end lobby":
 
+            case "controller command": 
+
             
             default:
                 break;

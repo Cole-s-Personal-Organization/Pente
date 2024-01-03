@@ -22,7 +22,10 @@ public class Namespace {
 
     // a controller for the namespace, each namespace will have one, 
     //      it will dictate how commands from incoming messages are handled
-    public final ControllerInterface controller;
+    public ControllerInterface controller;
+
+
+    public ProtocolInterface protocol;
 
 
 
