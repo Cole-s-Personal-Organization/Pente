@@ -6,31 +6,36 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class Message {
 
     public final String namespace;      // defined grouping of endpoint collections, e.g. groups, game. This will determine the protocol used to handle the message.
-    public final String endpoint;       // within the namespace grouping, define endpoint for actions to be handled
-    public final MessageAction action;  // tell the reciever how to handle data, this is also namespace/context dependent. e.g. get, delete, update
-    public final String[] recipientIds; // allow direct addresses to clients using their ids
-    public final String senderId; 
+    public final String command;       // within the namespace grouping, define endpoint for actions to be handled
+    // public final MessageAction action;  // tell the reciever how to handle data, this is also namespace/context dependent. e.g. get, delete, update
+    
+    
+    // public final String[] recipientIds; // allow direct addresses to clients using their ids
+    // public final String senderId; 
+    
+    
     public final JsonNode data;         // any attached data to the message, UNPARSED, up to the reciever to make sense of it
 
-    public enum MessageAction {
-        GET,
-        POST,
-        PUT,
-        DELETE,
-        UPDATE
-    }
+
+    // public enum MessageAction {
+    //     GET,
+    //     POST,
+    //     PUT,
+    //     DELETE,
+    //     UPDATE
+    // }
 
     // a helper data structure to simplify the process of mapping string actions to their enum counterparts
-    public static final Map<String, MessageAction> actionStrToEnumMap = new HashMap<>();
-    static {
-        actionStrToEnumMap.put("GET", MessageAction.GET);
-        actionStrToEnumMap.put("POST", MessageAction.POST);
-        actionStrToEnumMap.put("PUT", MessageAction.PUT);
-        actionStrToEnumMap.put("DELETE", MessageAction.DELETE);
-        actionStrToEnumMap.put("UPDATE", MessageAction.UPDATE);
-    }
+    // public static final Map<String, MessageAction> actionStrToEnumMap = new HashMap<>();
+    // static {
+    //     actionStrToEnumMap.put("GET", MessageAction.GET);
+    //     actionStrToEnumMap.put("POST", MessageAction.POST);
+    //     actionStrToEnumMap.put("PUT", MessageAction.PUT);
+    //     actionStrToEnumMap.put("DELETE", MessageAction.DELETE);
+    //     actionStrToEnumMap.put("UPDATE", MessageAction.UPDATE);
+    // }
 
-    public Message(String namespace, String endpoint, String action, String senderId, String[] recipientIds, JsonNode data) {
+    public Message(String namespace, String endpoint, String action, JsonNode data) {
         this.namespace = namespace;
         this.endpoint = this.formatEndpoint(endpoint);
         this.senderId = senderId;

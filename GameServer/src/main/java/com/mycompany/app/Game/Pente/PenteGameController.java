@@ -1,9 +1,9 @@
 package com.mycompany.app.Game.Pente;
 import java.util.HashMap;
 
-import com.mycompany.app.WebServer.GameControllerInterface;
+import com.mycompany.app.WebServer.ControllerInterface;
 
-public class PenteGameController implements GameControllerInterface {
+public class PenteGameController implements ControllerInterface {
     private PenteGameSettings gameSettings;
     private PenteGameBoardModel model;
 
