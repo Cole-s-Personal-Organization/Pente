@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.junit.Assert;
 
 import com.mycompany.app.Game.Pente.*;
 
@@ -32,77 +33,108 @@ public class PenteBoardGameModelTest {
         int posY = 5;
         PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
         PenteTurn turn = new PenteTurn.PenteTurnBuilder(posX, posY, playerNum).build();
-
-        model.setMove(turn);
+        try {
+            model.setMove(turn);
+        } catch (Exception e) {
+            Assert.fail();
+        }
         PenteBoardIdentifierEnum storedValue = model.getGameBoardValueAtPosition(posX, posY);
         assertEquals(storedValue, playerNum);
     }
 
-    // @Test
-    // public void cornerSetMove() {
-    //     PenteGameBoardModel model = new PenteGameBoardModel();
+    @Test
+    public void cornerSetMove() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
 
-    //     // move at 0, 0
-    //     int posXFirst = 5;
-    //     int posYFirst = 5;
-    //     PenteBoardIdentifierEnum playerNumFirst = PenteBoardIdentifierEnum.PLAYER2;
-    //     PenteTurn firstTurn = new PenteTurn.PenteTurnBuilder(posXFirst, posYFirst, playerNumFirst).build();
+        // move at 0, 0
+        int posXFirst = 0;
+        int posYFirst = 0;
+        PenteBoardIdentifierEnum playerNumFirst = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn firstTurn = new PenteTurn.PenteTurnBuilder(posXFirst, posYFirst, playerNumFirst).build();
 
-    //     // move at 18, 18
-    //     int posXSecond = 18;
-    //     int posYSecond = 18;
-    //     PenteBoardIdentifierEnum playerNumSecond = PenteBoardIdentifierEnum.PLAYER3;
-    //     PenteTurn secondTurn = new PenteTurn.PenteTurnBuilder(posXSecond, posYSecond, playerNumSecond).build();
+        // move at 18, 18
+        int posXSecond = 18;
+        int posYSecond = 18;
+        PenteBoardIdentifierEnum playerNumSecond = PenteBoardIdentifierEnum.PLAYER3;
+        PenteTurn secondTurn = new PenteTurn.PenteTurnBuilder(posXSecond, posYSecond, playerNumSecond).build();
 
 
-    //     model.setMove(firstTurn);
-    //     model.setMove(secondTurn);
-    // }
+        try {
+            System.out.println("HELLO WORLD");
+            model.setMove(firstTurn);
+            model.setMove(secondTurn);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+    }
 
-    // @Test(expected= IllegalArgumentException.class)
-    // public void illegalOnTopOfAnotherSetMove() {
-    //     PenteGameBoardModel model = new PenteGameBoardModel();
-        
-    //     // move at 5,5
-    //     int posXFirst = 5;
-    //     int posYFirst = 5;
-    //     PenteBoardIdentifierEnum playerNumFirst = PenteBoardIdentifierEnum.PLAYER2;
-    //     PenteTurn firstTurn = new PenteTurn.PenteTurnBuilder(posXFirst, posYFirst, playerNumFirst).build();
+    @Test
+    public void illegalOnTopOfAnotherSetMove() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
+        boolean thrown = false;
 
-    //     // move at 5,5
-    //     int posXSecond = 5;
-    //     int posYSecond = 5;
-    //     PenteBoardIdentifierEnum playerNumSecond = PenteBoardIdentifierEnum.PLAYER3;
-    //     PenteTurn secondTurn = new PenteTurn.PenteTurnBuilder(posXSecond, posYSecond, playerNumSecond).build();
+        // move at 5,5
+        int posXFirst = 5;
+        int posYFirst = 5;
+        PenteBoardIdentifierEnum playerNumFirst = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn firstTurn = new PenteTurn.PenteTurnBuilder(posXFirst, posYFirst, playerNumFirst).build();
 
-    //     model.setMove(firstTurn);
-    //     model.setMove(secondTurn);
-        
-    // }
+        // move at 5,5
+        int posXSecond = 5;
+        int posYSecond = 5;
+        PenteBoardIdentifierEnum playerNumSecond = PenteBoardIdentifierEnum.PLAYER3;
+        PenteTurn secondTurn = new PenteTurn.PenteTurnBuilder(posXSecond, posYSecond, playerNumSecond).build();
 
-    // @Test(expected = IndexOutOfBoundsException.class)
-    // public void illegalOutOfBoundsSetMove() {
-    //     PenteGameBoardModel model = new PenteGameBoardModel();
-        
-    //     // move at 5,5
-    //     int posX = 20;
-    //     int posY = 20;
-    //     PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
-    //     PenteTurn turn = new PenteTurn.PenteTurnBuilder(posX, posY, playerNum).build();
+        try {
+            model.setMove(firstTurn);
+            model.setMove(secondTurn);
+        } catch (PenteGameBoardModel.InvalidTurnException e) {
+            thrown = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(thrown);
+    }
 
-    //     model.setMove(turn);
-    // }
+    @Test
+    public void illegalOutOfBoundsSetMove() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
+        boolean thrown = false;
 
-    // @Test(expected = IllegalArgumentException.class)
-    // public void illegalSetToEmptySetMove() {
-    //     PenteGameBoardModel model = new PenteGameBoardModel();
-        
-    //     // move at 5,5
-    //     int posX = 5;
-    //     int posY = 5;
-    //     PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.EMPTY; // player num set to empty
-    //     PenteTurn turn = new PenteTurn.PenteTurnBuilder(posX, posY, playerNum).build();
+        // move at 5,5
+        int posX = 20;
+        int posY = 20;
+        PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn = new PenteTurn.PenteTurnBuilder(posX, posY, playerNum).build();
 
-    //     model.setMove(turn);
-    // }
+        try {
+            model.setMove(turn);
+        } catch (PenteGameBoardModel.InvalidTurnException e) {
+            thrown = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(thrown);
+    }
+
+    @Test
+    public void illegalSetToEmptySetMove() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
+        boolean thrown = false;
+
+        // move at 5,5
+        int posX = 5;
+        int posY = 5;
+        PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.EMPTY; // player num set to empty
+        PenteTurn turn = new PenteTurn.PenteTurnBuilder(posX, posY, playerNum).build();
+
+        try {
+            model.setMove(turn);
+        } catch (PenteGameBoardModel.InvalidTurnException e) {
+            thrown = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assertTrue(thrown);
+    }
 }

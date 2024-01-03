@@ -8,7 +8,7 @@ public class PenteTurn {
     public final PenteBoardIdentifierEnum playerNumber;
 
     // optional
-    private boolean isTurnOneAction;
+    public final Boolean isTurnOneAction;
 
     private PenteTurn(PenteTurnBuilder builder) {
         this.posX = builder.posX;
