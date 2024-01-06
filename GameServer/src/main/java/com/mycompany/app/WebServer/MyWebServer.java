@@ -1,51 +1,144 @@
 package com.mycompany.app.WebServer;
 
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.mycompany.app.Game.Pente.PenteGameController;
+import com.mycompany.app.WebServer.Namespace;
+import com.mycompany.app.WebServer.PacketHandler.InvalidPacketConstructionException;
 
 
 public class MyWebServer {
     private final int portNumber;
+    private static final int THREAD_POOL_SIZE = 10;
 
-    private static List<Socket> connectedClients = new ArrayList<>();
+    private Map<InetAddress, ClientProxy> addressToClientProxyMap = new HashMap<>();
+    
+    private Namespace baseNamespace;
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
+
+
+        // base namespace - it should be the only active namespace at runtime start
+        this.baseNamespace = new Namespace("base", UUID.randomUUID());
     }
 
     public void start() {
+        ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
+        // start server 
         try (ServerSocket serverSocket = new ServerSocket(this.portNumber)) {
             System.out.println("Server is listening on port " + portNumber);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
 
-                connectedClients.add(clientSocket);
 
-                // Create a new thread to handle the client request
-                ClientRunnable clientMessageHandler = new ClientRunnable(clientSocket);
-                Thread clientThread = new Thread(clientMessageHandler);
-                clientThread.start();
+                ServerRunnable newRunnable = new ServerRunnable(clientSocket);
+                    
+                executorService.submit(newRunnable);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            executorService.shutdown();
         }
     }
 
-    
+    public boolean isClientConnectedToServer(InetAddress address) {
+        return (this.addressToClientProxyMap.get(address) != null);
+    }
 
-    public class ClientRunnable implements Runnable {
-        private final Socket clientSocket;
+    public Packet processRawStringPacket(String rawStringPacket) {
+        Packet packet = null;
 
-        public ClientRunnable(Socket clientSocket) {
+        try {
+            packet = PacketHandler.parsePacket(rawStringPacket);
+            // String intendedNamespace = packet.namespace;
+            // String[] intendedNamespaceStrArr = intendedNamespace.split("/"); 
+            // baseNamespace.routeCommand(intendedNamespace, message);
+
+        } catch (InvalidPacketConstructionException e) {
+            // TODO: handle exception
+        }
+
+        return packet;
+    }
+
+    /**
+     * Initiates recurrsive call for handling packets within the namespace data structure.
+     * @param packet
+     * @param fromAddress
+     */
+    private void handlePacketFromKnownClient(Packet packet, InetAddress fromAddress) {
+        String[] baseNamespacePath = packet.getNamespacePath();
+        
+        this.baseNamespace.routeCommand(baseNamespace, baseNamespacePath, packet);
+    }
+
+    /**
+     * Handles new connections to the base of the server
+     * @param packet
+     * @param fromAddress
+     */
+    public void handlePacketFromNewClient(Packet packet, InetAddress fromAddress) {
+        switch (packet.getCommand()) {
+            case "HELLO":
+                JsonNode payload = packet.getData();
+                String clientName = payload.get("clientName").asText();
+                UUID clientId = UUID.randomUUID();
+
+                // create clientProxy
+                ClientProxy proxy = new ClientProxy(fromAddress, clientName, clientId);
+
+
+                // enter client into base level namespace
+                this.baseNamespace.connectClient(fromAddress);
+
+                // welcome client - use connected base controller to send welcome message
+                this.baseNamespace.controller.welcomeNewClient();
+
+
+                // init clientProxy replication manager
+                ReplicationManagerService rManagerService = new ReplicationManagerService();
+                proxy.setReplicationManagerService(rManagerService);
+
+                this.addressToClientProxyMap.put(fromAddress, proxy);
+                break;
+
+            default:
+                System.out.println("Bad incoming packet from unknown client at socket " + fromAddress.toString());
+                break;
+        }
+    }
+
+
+    /**
+     * Runnable that handles client connections to the server
+     */
+    private class ServerRunnable implements Runnable {
+        private Socket clientSocket;
+
+        public ServerRunnable(Socket clientSocket) {
             this.clientSocket = clientSocket;
         }
 
+        private void routePacketBasedOnClientDiscoveryStatus(Packet packet) {
+            // do we know who this is
+            InetAddress clientAddress = this.clientSocket.getInetAddress();
+            boolean isClientConnected = isClientConnectedToServer(clientAddress);
+
+            if (isClientConnected) {
+                handlePacketFromKnownClient(packet, clientAddress);
+            } else {
+                handlePacketFromNewClient(packet, clientAddress);
+            }
+        }
 
         @Override
         public void run() {
@@ -55,26 +148,11 @@ public class MyWebServer {
                 String rawInputLine;
                 
                 while((rawInputLine = reader.readLine()) != null) {
-                    System.out.println(rawInputLine);
+                    Packet incomingPacket = processRawStringPacket(rawInputLine);
 
-                    /**
-                     * from this point we need to 
-                     * 1. parse the string into a format which is readable to a message director (decides where the message needs to go)
-                     * 2. identify what the intention of the message is
-                     *  - is it a player turn
-                     *  - is a player trying to join a lobby
-                     *  - no action or not a allowed action?
-                     *  - etc
-                     * 3. data needs to be formated in a manner to allow it be taken in from its recipients
-                     * 4. formatted data alters models
-                     * 5. state is now changed, concerned parties now need to be made aware, notify 
-                     */
-
-                     // parse 
-                     Message message = new Message(rawInputLine);
-
-                    // determine what to build based on parsed message namespace
-                    
+                    if (incomingPacket != null) {
+                        routePacketBasedOnClientDiscoveryStatus(incomingPacket);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();

@@ -16,6 +16,7 @@ public enum PenteBoardIdentifierEnum {
         public String toString() {
             return "1";
         }
+        
     }, 
     PLAYER2 {
         @Override
