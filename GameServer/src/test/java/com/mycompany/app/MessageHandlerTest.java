@@ -11,10 +11,8 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.mycompany.app.WebServer.Message;
-import com.mycompany.app.WebServer.MessageHandler;
-import com.mycompany.app.WebServer.Message.MessageAction;
-import com.mycompany.app.WebServer.MessageHandler.InvalidMessageConstructionException;
+import com.mycompany.app.WebServer.Packet;
+import com.mycompany.app.WebServer.PacketHandler;
 
 public class MessageHandlerTest {
 
@@ -22,7 +20,7 @@ public class MessageHandlerTest {
     public void testRemoveQuotesProperlyQuoted() {
         // Test case with properly double-quoted JSON string
         String input = "\"Hello, World!\"";
-        String result = MessageHandler.removeQuotesFromStringCastedJson(input);
+        String result = PacketHandler.removeQuotesFromStringCastedJson(input);
         assertEquals("Hello, World!", result);
     }
 
@@ -30,7 +28,7 @@ public class MessageHandlerTest {
     public void testRemoveQuotesImproperlyQuoted() {
         // Test case with improperly quoted JSON string (single quotes used)
         String input = "'Hello, World!'";
-        String result = MessageHandler.removeQuotesFromStringCastedJson(input);
+        String result = PacketHandler.removeQuotesFromStringCastedJson(input);
         assertEquals("'Hello, World!'", result); // Since the input is not properly quoted, the function should return the input as-is
     }
 
@@ -38,7 +36,7 @@ public class MessageHandlerTest {
     public void testRemoveQuotesNotQuoted() {
         // Test case with a non-quoted JSON string
         String input = "Hello, World!";
-        String result = MessageHandler.removeQuotesFromStringCastedJson(input);
+        String result = PacketHandler.removeQuotesFromStringCastedJson(input);
         assertEquals("Hello, World!", result); // Since the input is not quoted, the function should return the input as-is
     }
 
@@ -46,10 +44,10 @@ public class MessageHandlerTest {
     public void testParseMessage() {
         // Test case with a valid message
         String validMessage = "{\"namespace\":\"ns\",\"endpoint\":\"endpoint\",\"senderId\":\"sender123\",\"recipients\":[\"recipient1\",\"recipient2\"],\"action\":\"GET\",\"data\":\"some data\"}";
-        Message validParsedMessage = null;
+        Packet validParsedMessage = null;
 
         try { // ideally there will be no exception, data will be returned
-            validParsedMessage = MessageHandler.parseMessage(validMessage);
+            validParsedMessage = PacketHandler.parseMessage(validMessage);
         } catch (InvalidMessageConstructionException e) {
             assertEquals("Error: missing [senderId] attribute in raw message. Cannot construct Message object.", e.getMessage());
         }
@@ -67,7 +65,7 @@ public class MessageHandlerTest {
     public void testParseMissingSenderId() {
         String missingSenderIdMessage = "{\"namespace\":\"ns\",\"endpoint\":\"endpoint\",\"recipients\":[\"recipient1\",\"recipient2\"],\"action\":\"GET\",\"data\":\"some data\"}";
         try {
-            MessageHandler.parseMessage(missingSenderIdMessage);
+            PacketHandler.parseMessage(missingSenderIdMessage);
             fail("Expected InvalidMessageConstructionException");
         } catch (InvalidMessageConstructionException e) {
             assertEquals("Error: missing [senderId] attribute in raw message. Cannot construct Message object.", e.getMessage());

@@ -1,6 +1,11 @@
 package com.mycompany.app.WebServer;
 
 public interface ControllerInterface {
-    // returns http inspired numeric code for success/faliure
-    public int handleMessage(Message message); 
+    public void processPacket(Namespace namespace, Packet packet);
+
+    // public void handlePacketFromNewClient();
+
+    public void welcomeNewClient();
+
+    // public String getCommands();
 }

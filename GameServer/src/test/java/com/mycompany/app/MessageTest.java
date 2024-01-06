@@ -10,7 +10,7 @@ import java.util.HashMap;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycompany.app.WebServer.Message;
+import com.mycompany.app.WebServer.Packet;
 
 public class MessageTest {
 
@@ -23,13 +23,13 @@ public class MessageTest {
         String[] recipientIds = {"recipient1", "recipient2"};
         JsonNode data = new ObjectMapper().createObjectNode(); // blank data
 
-        Message message = new Message(namespace, endpoint, action, senderId, recipientIds, data);
+        Packet message = new Packet(namespace, endpoint, action, senderId, recipientIds, data);
 
         String expected = "{" +
             "\"namespace\":\"" + namespace + "\"," +
             "\"endpoint\":\"" + endpoint + "\"," +
             "\"senderId\":\"" + senderId + "\"," +
-            "\"action\":\"" + Message.MessageAction.POST + "\"," +
+            "\"action\":\"" + Message.Packet.POST + "\"," +
             "\"data\":\"" + data + "\"," +
             "\"recipients\":[\"recipient1\",\"recipient2\"]" +
             "}";
@@ -45,13 +45,13 @@ public class MessageTest {
         String[] recipientIds = {};
         JsonNode data = new ObjectMapper().createObjectNode(); // blank data
 
-        Message message = new Message(namespace, endpoint, action, senderId, recipientIds, data);
+        Packet message = new Packet(namespace, endpoint, action, senderId, recipientIds, data);
 
         String expected = "{" +
             "\"namespace\":\"" + namespace + "\"," +
             "\"endpoint\":\"" + endpoint + "\"," +
             "\"senderId\":\"" + senderId + "\"," +
-            "\"action\":\"" + Message.MessageAction.GET + "\"," +
+            "\"action\":\"" + Message.Packet.GET + "\"," +
             "\"data\":\"" + data + "\"," +
             "\"recipients\":[]" +
             "}";
@@ -67,13 +67,13 @@ public class MessageTest {
         String[] recipientIds = {"recipient6"};
         JsonNode data = new ObjectMapper().createObjectNode(); // blank data
 
-        Message message = new Message(namespace, endpoint, action, senderId, recipientIds, data);
+        Packet message = new Packet(namespace, endpoint, action, senderId, recipientIds, data);
 
         String expected = "{" +
             "\"namespace\":\"" + namespace + "\"," +
             "\"endpoint\":\"\"," +
             "\"senderId\":\"" + senderId + "\"," +
-            "\"action\":\"" + Message.MessageAction.UPDATE + "\"," +
+            "\"action\":\"" + Message.Packet.UPDATE + "\"," +
             "\"data\":\"" + data + "\"," +
             "\"recipients\":[\"recipient6\"]" +
             "}";

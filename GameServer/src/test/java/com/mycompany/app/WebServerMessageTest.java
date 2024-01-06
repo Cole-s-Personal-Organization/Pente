@@ -8,7 +8,7 @@ import static org.junit.Assert.fail;
 import java.util.HashMap;
 import org.junit.Test;
 
-import com.mycompany.app.WebServer.Message;
+import com.mycompany.app.WebServer.Packet;
 
 public class WebServerMessageTest {
 

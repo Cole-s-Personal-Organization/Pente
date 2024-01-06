@@ -1,118 +1,145 @@
 package com.mycompany.app.WebServer;
 
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.mycompany.app.Game.Pente.PenteGameController;
 import com.mycompany.app.WebServer.Namespace;
-import com.mycompany.app.WebServer.Protocols.BaseProtocol;
+import com.mycompany.app.WebServer.PacketHandler.InvalidPacketConstructionException;
 
 
 public class MyWebServer {
     private final int portNumber;
+    private static final int THREAD_POOL_SIZE = 10;
+
+    private Map<InetAddress, ClientProxy> addressToClientProxyMap = new HashMap<>();
     
-    // Namespaces help organize our clients into logical groupings
-    // Namespaces will consititute any subset of the total set of people 
-    // For our toy example of pente each lobby will be placed into a Namespace
-    //  should they decide to play on teams it will also be necessary to also join the teams together with their own induvidual namespaces
-
-    // it will be up to each namespace to define how 
-
-    private UUID baseNamespaceUuid; 
-    private Map<UUID, Namespace> namespaceIdToNamespaceSetMap = new HashMap<>(); 
+    private Namespace baseNamespace;
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
 
 
-        // base namespace - it should be the only active namespace
-        Namespace baseNamespace = new Namespace("base");
-        this.baseNamespaceUuid = baseNamespace.uuid;
-        
-        insertNamespace(baseNamespace);
+        // base namespace - it should be the only active namespace at runtime start
+        this.baseNamespace = new Namespace("base", UUID.randomUUID());
     }
 
     public void start() {
+        ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+
+        // start server 
         try (ServerSocket serverSocket = new ServerSocket(this.portNumber)) {
             System.out.println("Server is listening on port " + portNumber);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
 
-                ClientInstance clientInstance = new ClientInstance(clientSocket);
-                
-                // every client will be connected to the base namespace so long as they're online
-                this.namespaceIdToNamespaceSetMap
-                    .get("")
-                    .connectClient(clientInstance);
 
-                clientInstance.start();
+                ServerRunnable newRunnable = new ServerRunnable(clientSocket);
+                    
+                executorService.submit(newRunnable);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            executorService.shutdown();
         }
     }
-    
 
-    public class ClientInstance extends Thread {
-        public final Socket clientSocket;
-        private User associatedUserInfo;
+    public boolean isClientConnectedToServer(InetAddress address) {
+        return (this.addressToClientProxyMap.get(address) != null);
+    }
 
-        public ClientInstance(Socket clientSocket) {
-            this.clientSocket = clientSocket;
-            this.associatedUserInfo = new User("", "");
+    public Packet processRawStringPacket(String rawStringPacket) {
+        Packet packet = null;
+
+        try {
+            packet = PacketHandler.parsePacket(rawStringPacket);
+            // String intendedNamespace = packet.namespace;
+            // String[] intendedNamespaceStrArr = intendedNamespace.split("/"); 
+            // baseNamespace.routeCommand(intendedNamespace, message);
+
+        } catch (InvalidPacketConstructionException e) {
+            // TODO: handle exception
         }
 
-        public User getAssociatedUserInfo() {
-            return associatedUserInfo;
-        }
+        return packet;
+    }
 
-        /**
-         * Function for writing simplified response messages to a user after a message has been sent
-         * Generally follows standard HTTP Response codes for ease of use.
-         * @param responseCode
-         */
-        private void writeResponseMessage(int responseCode) {
-
-        }
-
-        private void handleMessage(String rawInputLine) {
-            System.out.println(rawInputLine);
-            // Message message;
-
-            // try {
-            //     message = MessageHandler.parseMessage(rawInputLine);
-            // } catch (Exception e) {
-            //     // send message to sender that their message just failed
-            //     if (e instanceof MessageHandler.InvalidMessageConstructionException) {
-            //         writeResponseMessage(422); // unprocessable entity
-            //     }
-            //     return;
-            // }
-
-            // // use the namespace to route the message to it's protocol like an endpoint 
-            // String namespace = message.namespace;
-            // switch (namespace) {
-            //     case "":
-            //         // default
-            //         break;
-            //     default:
-            //         // no such namespace, should never be reached
-            //         writeResponseMessage(500);
-            //         return;
-            // }
-
-
-            // writeResponseMessage(200);
-        }
-
+    /**
+     * Initiates recurrsive call for handling packets within the namespace data structure.
+     * @param packet
+     * @param fromAddress
+     */
+    private void handlePacketFromKnownClient(Packet packet, InetAddress fromAddress) {
+        String[] baseNamespacePath = packet.getNamespacePath();
         
+        this.baseNamespace.routeCommand(baseNamespace, baseNamespacePath, packet);
+    }
+
+    /**
+     * Handles new connections to the base of the server
+     * @param packet
+     * @param fromAddress
+     */
+    public void handlePacketFromNewClient(Packet packet, InetAddress fromAddress) {
+        switch (packet.getCommand()) {
+            case "HELLO":
+                JsonNode payload = packet.getData();
+                String clientName = payload.get("clientName").asText();
+                UUID clientId = UUID.randomUUID();
+
+                // create clientProxy
+                ClientProxy proxy = new ClientProxy(fromAddress, clientName, clientId);
+
+
+                // enter client into base level namespace
+                this.baseNamespace.connectClient(fromAddress);
+
+                // welcome client - use connected base controller to send welcome message
+                this.baseNamespace.controller.welcomeNewClient();
+
+
+                // init clientProxy replication manager
+                ReplicationManagerService rManagerService = new ReplicationManagerService();
+                proxy.setReplicationManagerService(rManagerService);
+
+                this.addressToClientProxyMap.put(fromAddress, proxy);
+                break;
+
+            default:
+                System.out.println("Bad incoming packet from unknown client at socket " + fromAddress.toString());
+                break;
+        }
+    }
+
+
+    /**
+     * Runnable that handles client connections to the server
+     */
+    private class ServerRunnable implements Runnable {
+        private Socket clientSocket;
+
+        public ServerRunnable(Socket clientSocket) {
+            this.clientSocket = clientSocket;
+        }
+
+        private void routePacketBasedOnClientDiscoveryStatus(Packet packet) {
+            // do we know who this is
+            InetAddress clientAddress = this.clientSocket.getInetAddress();
+            boolean isClientConnected = isClientConnectedToServer(clientAddress);
+
+            if (isClientConnected) {
+                handlePacketFromKnownClient(packet, clientAddress);
+            } else {
+                handlePacketFromNewClient(packet, clientAddress);
+            }
+        }
+
         @Override
         public void run() {
             System.out.println("Connection established with " + this.clientSocket.getInetAddress());
@@ -121,7 +148,11 @@ public class MyWebServer {
                 String rawInputLine;
                 
                 while((rawInputLine = reader.readLine()) != null) {
-                    this.handleMessage(rawInputLine);
+                    Packet incomingPacket = processRawStringPacket(rawInputLine);
+
+                    if (incomingPacket != null) {
+                        routePacketBasedOnClientDiscoveryStatus(incomingPacket);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();

@@ -4,12 +4,12 @@ import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycompany.app.WebServer.Message;
+import com.mycompany.app.WebServer.Packet;
 
 /**
  * This class will be used to standardize the format of messages. It will be a wrapper for a jackson JSON object 
  */
-public class MessageHandler {
+public class PacketHandler {
     // set as static to ensure all json mapping is being done with the same configs
     private static ObjectMapper objectMapper = getDefaultObjectMapper();
 
@@ -18,6 +18,11 @@ public class MessageHandler {
     }
 
 
+    /**
+     * Helper function to remove '\"' from either end of a string.
+     * @param jsonStr
+     * @return
+     */
     public static String removeQuotesFromStringCastedJson(String jsonStr) {
         boolean isDoubleQuoted = jsonStr.startsWith("\"") && jsonStr.endsWith("\"");
         boolean isSingleQuoted = (jsonStr.startsWith("\"") && jsonStr.endsWith("\""));
@@ -30,16 +35,16 @@ public class MessageHandler {
     }
 
 
-    public static Message parseMessage(String rawMessage) throws InvalidMessageConstructionException {
+    public static Packet parsePacket(String rawPacket) throws InvalidPacketConstructionException {
         List<String> missingAttributes = new ArrayList<String>();
 
         JsonNode messageNode;
 
         try {
-            messageNode = objectMapper.readTree(rawMessage);
+            messageNode = objectMapper.readTree(rawPacket);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new InvalidMessageConstructionException("Error: unreadable message recieved.");
+            throw new InvalidPacketConstructionException("Error: unreadable message recieved.");
         }
 
         JsonNode extractedNamespace = messageNode.get("namespace");
@@ -75,18 +80,18 @@ public class MessageHandler {
         if (action == null) { missingAttributes.add("action"); }
         if (!missingAttributes.isEmpty()) {
             String missingAttributeString = missingAttributes.toString();
-            throw new InvalidMessageConstructionException("Error: missing " + missingAttributeString + " attribute in raw message. Cannot construct Message object.");
+            throw new InvalidPacketConstructionException("Error: missing " + missingAttributeString + " attribute in raw message. Cannot construct Message object.");
         }
         
-        return new Message(namespace, endpoint, action, senderId, recipientList, extractedData);
+        return new Packet(namespace, endpoint, action, senderId, recipientList, extractedData);
     }
 
-    public static JsonNode messageToJson(Message message) {
+    public static JsonNode messageToJson(Packet message) {
         return objectMapper.valueToTree(message);
     }
 
-    public static class InvalidMessageConstructionException extends Exception {
-        public InvalidMessageConstructionException(String errorMessage) {
+    public static class InvalidPacketConstructionException extends Exception {
+        public InvalidPacketConstructionException(String errorMessage) {
             super(errorMessage);
         }
     }

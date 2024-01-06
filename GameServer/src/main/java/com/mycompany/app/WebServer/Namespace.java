@@ -2,19 +2,15 @@ package com.mycompany.app.WebServer;
 
 import java.net.Socket;
 import java.util.*;
+import java.net.*;
 import java.io.*;
 
-import com.mycompany.app.WebServer.MyWebServer.ClientInstance;
-
 public class Namespace {
-    public final UUID uuid;
+    public final UUID id;
     public final String name;
 
 
-    // users will always be placed in the leaf node namespaces
-    // their actions will start in the leaf and be handled there, 
-    //      if there is no overriding implementation of the action, continue to parent until you find one
-    private Map<UUID, ClientInstance> clientIdToInstanceMap = new HashMap<>();
+    private List<InetAddress> clientAddressList = new ArrayList<>();
 
     // all subset namespaces of the current namespace 
     //      e.g. a lobby has teams
@@ -25,35 +21,74 @@ public class Namespace {
     public ControllerInterface controller;
 
 
-    public ProtocolInterface protocol;
-
-
-
-    public Namespace(String name, UUID[] otherNamespaceUuids) {
+    public Namespace(String name, UUID namespaceUuid) {
         this.name = name;
 
-        // ROLL NEW IDS UNTIL UNIQUENESS IS ACHEIVED
-        UUID newNamespaceId = UUID.randomUUID();
-        List<UUID> otherNamespaceUuidsListObj = Arrays.asList(otherNamespaceUuids);
-
-        // continue making new namespace ids until I get a unique one
-        while (otherNamespaceUuidsListObj.contains(newNamespaceId)) {
-            newNamespaceId = UUID.randomUUID();
-        }
-
-        this.uuid = newNamespaceId;
+        // each sibling namespace will have a unique id to differentiate itself from the others
+        this.id = namespaceUuid;
 
         this.controller = new BaseServerController();
     }
 
 
-    public void connectClient(UUID clientId, ClientInstance client) {
+    /**
+     * Recurrsivley routes through namespace tree to find the namespace which the message is going to be sent to.
+     * @param currNamespace
+     * @param currNamespaceRouteLst
+     * @param message
+     */
+    public void routeCommand(Namespace currNamespace, String[] currNamespaceRouteLst, Packet message) {
+        if (currNamespaceRouteLst.length > 0) {
+            // each namespace string within the list is an id which maps to a child namespace if one exists
+            String nextNamespace = currNamespaceRouteLst[0];
+            UUID nextNamespaceId = UUID.fromString(nextNamespace);
+            int indexOfChild = getIndexOfChildNamespaceById(nextNamespaceId);
 
-        this.clientIdToInstanceMap.put(clientId, client);
+            // pop the first element in the list
+            String[] shortenedNamespaceRouteLst = Arrays.copyOfRange(currNamespaceRouteLst, 1, currNamespaceRouteLst.length);
+
+            routeCommand(childrenNamespaces[indexOfChild], shortenedNamespaceRouteLst, message);
+        } else {
+            // we have reached the messages intended namespace
+
+            this.controller.handleCommand(currNamespace, message);
+        }
     }
 
-    public void disconnectClient(UUID clientId) {
-        this.clientIdToInstanceMap.remove(clientId);
+    private UUID[] getChildrenNamespaceIds() {
+        UUID[] childrenIdList = new UUID[this.childrenNamespaces.length];
+
+        for (int i = 0; i < childrenNamespaces.length; i++) {
+            childrenIdList[i] = childrenNamespaces[i].id;
+        }
+        return childrenIdList;
+    }
+
+
+    /**
+     * Iterates through current namespaces children looking for one that has an id which matches the parameters.
+     * @param id
+     * @return
+     * @throws NoSuchElementException
+     */
+    private int getIndexOfChildNamespaceById(UUID id) throws NoSuchElementException {
+        for (int i = 0; i < childrenNamespaces.length; i++) {
+            if(childrenNamespaces[i].id == id) {
+                return i;
+            } 
+        }
+
+        throw new NoSuchElementException("Searched id does not exist within the child namespace list.");
+    }
+
+
+    public void connectClient(InetAddress clientAddress) {
+
+        this.clientAddressList.add(clientAddress);
+    }
+
+    public void disconnectClient(InetAddress clientAddress) {
+        this.clientAddressList.remove(clientAddress);
     }
 
     /**
@@ -61,7 +96,7 @@ public class Namespace {
      * @param message
      * @param clientId
      */
-    public void sendMessage(Message message, UUID clientId) {
+    public void sendMessage(Packet message, UUID clientId) {
         Socket socket = this.clientIdToInstanceMap.get(clientId).clientSocket;
 
         try {
@@ -77,7 +112,7 @@ public class Namespace {
      * Send message to all clients in namespace
      * @param message
      */
-    public void broadcastMessage(Message message) {
+    public void broadcastMessage(Packet message) {
         List<ClientInstance> clients = new ArrayList<>(this.clientIdToInstanceMap.values());
 
         try {
