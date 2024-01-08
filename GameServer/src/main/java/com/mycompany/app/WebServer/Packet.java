@@ -1,6 +1,7 @@
 package com.mycompany.app.WebServer;
 
 import java.util.*;
+import java.net.*;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class Packet {
@@ -14,10 +15,18 @@ public class Packet {
     // destination address of logical handler, e.g. groups, game. 
     //      This will determine the location of the end interpreter used to handle the message.
     private String[] namespacePath; 
+
+    // /group1/team1/
     
     // defines the packet type
     //  within the namespace grouping, helps with identification/interpretation of data
     private String command;     
+
+
+    // attached to packet to denote if sender is valid or not
+    // used for authorization and connection purposes
+    private Boolean senderValidated = false;
+
 
     // any attached data to the message
     //  UNPARSED, up to the reciever to make sense of it
@@ -29,6 +38,13 @@ public class Packet {
         this.namespacePath = namespacePath.split("/");
         this.command = command;
         this.data = data;
+    } 
+
+    public Packet(String namespacePath, String command, JsonNode data, Boolean senderValidated) {
+        this.namespacePath = namespacePath.split("/");
+        this.command = command;
+        this.data = data;
+        this.senderValidated = senderValidated;
     } 
 
     /**
@@ -64,6 +80,7 @@ public class Packet {
         String sendString = "{" 
             + "\"namespace\":\"" + getStringifiedNamespace() + "\","
             + "\"command\":\"" + this.command + "\","
+            + "\"validatedUser\":\"" + this.senderValidated + "\","
             + "\"data\":\"" + this.data + "\"";
         return sendString + "}";
     }
@@ -76,6 +93,9 @@ public class Packet {
         return command;
     }
 
+    public Boolean getSenderValidated() {
+        return senderValidated;
+    }
     public JsonNode getData() {
         return data;
     }

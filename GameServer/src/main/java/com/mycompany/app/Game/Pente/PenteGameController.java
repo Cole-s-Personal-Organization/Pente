@@ -1,16 +1,17 @@
 package com.mycompany.app.Game.Pente;
 import java.util.HashMap;
 
-import com.mycompany.app.WebServer.ControllerInterface;
-import com.mycompany.app.WebServer.ControllerTypeEnum;
 import com.mycompany.app.WebServer.Packet;
-import com.mycompany.app.WebServer.Namespace;
 
-public class PenteGameController implements ControllerInterface {
+public class PenteGameController {
     private PenteGameSettings gameSettings;
     private PenteGameBoardModel model;
 
     private int[] playerCaptures;
+
+    public PenteGameController() {
+        this.gameSettings = new PenteGameSettings.PenteGameSettingsBuilder().setToDefaultValues().build();
+    }
 
     public PenteGameController(
         PenteGameSettings settings,
@@ -26,24 +27,8 @@ public class PenteGameController implements ControllerInterface {
         this.playerCaptures = new int[2];
     }
 
-    @Override
-    public void handleCommand(Namespace namespace, Packet packet) {
-        switch (packet.getCommand()) {
-            case "connect user": // connect user to namespace
-                namespace.connectClient(null, null);
-                break;
-
-            case "chat":
-                
-                break;
-            case "start lobby":
-
-            case "end lobby":
-
-            
-            default:
-                break;
-        }
+    void start() {
+        this.model = new PenteGameBoardModel();
     }
 
     /**

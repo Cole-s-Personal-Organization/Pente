@@ -36,7 +36,7 @@ public class PacketHandler {
 
 
     public static Packet parsePacket(String rawPacket) throws InvalidPacketConstructionException {
-        List<String> missingAttributes = new ArrayList<String>();
+        List<String> missingAttributes = new ArrayList<String>(); // list used to collect the names of all missing attributes for error printing
 
         JsonNode messageNode;
 
@@ -48,42 +48,48 @@ public class PacketHandler {
         }
 
         JsonNode extractedNamespace = messageNode.get("namespace");
-        JsonNode extractedEndpoint = messageNode.get("endpoint");
-        JsonNode extractedSenderId = messageNode.get("senderId");
-        JsonNode extractedRecipientList = messageNode.get("recipients");
-        JsonNode extractedAction = messageNode.get("action");
+        JsonNode extractedCommand = messageNode.get("command");
         JsonNode extractedData = messageNode.get("data");
-
+        JsonNode extractedValidationSignature = messageNode.get("validatedUser");
 
         String namespace = (extractedNamespace != null) 
             ? (removeQuotesFromStringCastedJson(extractedNamespace.toString())) 
-            : (""); // default to empty namespace 
-        String endpoint = (extractedEndpoint != null) 
-            ? (removeQuotesFromStringCastedJson(extractedEndpoint.toString())) 
-            : (""); // default to empty endpoint
-        String action = (extractedAction != null) 
-            ? (removeQuotesFromStringCastedJson(extractedAction.toString())) 
             : (null); 
-        String senderId = (extractedSenderId != null) 
-            ? (removeQuotesFromStringCastedJson(extractedSenderId.toString())) 
+        String command = (extractedCommand != null) 
+            ? (removeQuotesFromStringCastedJson(extractedCommand.toString())) 
+            : (null); 
+        Boolean validationSig = (extractedValidationSignature != null) 
+            ? Boolean.valueOf(removeQuotesFromStringCastedJson(extractedValidationSignature.toString())) 
             : (null); 
 
-        String[] recipientList = (extractedRecipientList != null) 
-            ? (objectMapper.convertValue(extractedRecipientList, String[].class))
-            : (new String[0]);
-        for (int i = 0; i < recipientList.length; i++) {
-            recipientList[i] = removeQuotesFromStringCastedJson(recipientList[i]);
+        String stringifiedData = (extractedData != null) 
+            ? removeQuotesFromStringCastedJson(extractedData.toString())
+            : (null); 
+        JsonNode dataNode = objectMapper.createObjectNode();
+
+        try {
+            dataNode = objectMapper.readTree(stringifiedData);
+        } catch (Exception e) {
+            System.out.println("Error: issue unwraping and reading data.");
         }
 
         // throw error if missing required info
-        if (senderId == null) { missingAttributes.add("senderId"); }
-        if (action == null) { missingAttributes.add("action"); }
+        if (command == null) { missingAttributes.add("command"); }
+        if (namespace == null) { missingAttributes.add("namespace"); }
         if (!missingAttributes.isEmpty()) {
             String missingAttributeString = missingAttributes.toString();
             throw new InvalidPacketConstructionException("Error: missing " + missingAttributeString + " attribute in raw message. Cannot construct Message object.");
         }
+
+        Packet packet;
+
+        if (validationSig != null) {
+            packet = new Packet(namespace, command, dataNode, validationSig);
+        } else {
+            packet = new Packet(namespace, command, dataNode);
+        }
         
-        return new Packet(namespace, endpoint, action, senderId, recipientList, extractedData);
+        return packet;
     }
 
     public static JsonNode messageToJson(Packet message) {

@@ -1,34 +1,36 @@
 package com.mycompany.app.WebServer;
 
-import java.net.Socket;
 import java.util.*;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.net.*;
 import java.io.*;
 
-public class Namespace {
+public abstract class AbstractNamespace {
     public final UUID id;
     public final String name;
 
 
-    private List<InetAddress> clientAddressList = new ArrayList<>();
+    public Map<UUID, ClientProxy> sessionIdToClientProxyMap = new HashMap<>();
 
     // all subset namespaces of the current namespace 
     //      e.g. a lobby has teams
-    private Namespace[] childrenNamespaces;
-
-    // a controller for the namespace, each namespace will have one, 
-    //      it will dictate how commands from incoming messages are handled
-    public ControllerInterface controller;
+    protected AbstractNamespace[] childrenNamespaces;
 
 
-    public Namespace(String name, UUID namespaceUuid) {
+    public AbstractNamespace(String name, UUID namespaceUuid) {
         this.name = name;
 
         // each sibling namespace will have a unique id to differentiate itself from the others
         this.id = namespaceUuid;
-
-        this.controller = new BaseServerController();
     }
+
+    public abstract void handlePacket(Packet p, AbstractNamespace n);
+    public abstract void connectClient(UUID clientId);
+    public abstract void disconnectClient(UUID clientId);
 
 
     /**
@@ -37,23 +39,23 @@ public class Namespace {
      * @param currNamespaceRouteLst
      * @param message
      */
-    public void routeCommand(Namespace currNamespace, String[] currNamespaceRouteLst, Packet message) {
-        if (currNamespaceRouteLst.length > 0) {
-            // each namespace string within the list is an id which maps to a child namespace if one exists
-            String nextNamespace = currNamespaceRouteLst[0];
-            UUID nextNamespaceId = UUID.fromString(nextNamespace);
-            int indexOfChild = getIndexOfChildNamespaceById(nextNamespaceId);
+    // public void routeCommand(BaseNamespace currNamespace, String[] currNamespaceRouteLst, Packet message) {
+    //     if (currNamespaceRouteLst.length > 0) {
+    //         // each namespace string within the list is an id which maps to a child namespace if one exists
+    //         String nextNamespace = currNamespaceRouteLst[0];
+    //         UUID nextNamespaceId = UUID.fromString(nextNamespace);
+    //         int indexOfChild = getIndexOfChildNamespaceById(nextNamespaceId);
 
-            // pop the first element in the list
-            String[] shortenedNamespaceRouteLst = Arrays.copyOfRange(currNamespaceRouteLst, 1, currNamespaceRouteLst.length);
+    //         // pop the first element in the list
+    //         String[] shortenedNamespaceRouteLst = Arrays.copyOfRange(currNamespaceRouteLst, 1, currNamespaceRouteLst.length);
 
-            routeCommand(childrenNamespaces[indexOfChild], shortenedNamespaceRouteLst, message);
-        } else {
-            // we have reached the messages intended namespace
+    //         routeCommand(childrenNamespaces[indexOfChild], shortenedNamespaceRouteLst, message);
+    //     } else {
+    //         // we have reached the messages intended namespace
 
-            this.controller.handleCommand(currNamespace, message);
-        }
-    }
+    //         this.controller.handleCommand(currNamespace, message);
+    //     }
+    // }
 
     private UUID[] getChildrenNamespaceIds() {
         UUID[] childrenIdList = new UUID[this.childrenNamespaces.length];
@@ -79,16 +81,6 @@ public class Namespace {
         }
 
         throw new NoSuchElementException("Searched id does not exist within the child namespace list.");
-    }
-
-
-    public void connectClient(InetAddress clientAddress) {
-
-        this.clientAddressList.add(clientAddress);
-    }
-
-    public void disconnectClient(InetAddress clientAddress) {
-        this.clientAddressList.remove(clientAddress);
     }
 
     /**
@@ -126,9 +118,24 @@ public class Namespace {
         }
     }
 
-    public void setController(ControllerInterface controller) {
-        this.controller = controller;
-    }
-
     
+    public JsonNode[] getSessionsInNamespace() {
+        List<JsonNode> jsonSessions = new ArrayList<>();
+
+        for (Map.Entry<UUID, ClientProxy> entry : this.sessionIdToClientProxyMap.entrySet()) {
+            ObjectNode sessionNode = JsonNodeFactory.instance.objectNode();
+            
+            UUID sessionId = entry.getKey();
+            ClientProxy clientObj = entry.getValue();
+
+            JsonNode clientInfoNode = clientObj.toJson();
+
+            sessionNode.put("sessionId", sessionId.toString());
+            sessionNode.set("clientInfo", clientInfoNode);
+
+            jsonSessions.add((JsonNode)sessionNode);
+        }
+
+        return (JsonNode[])jsonSessions.toArray();
+    }
 }

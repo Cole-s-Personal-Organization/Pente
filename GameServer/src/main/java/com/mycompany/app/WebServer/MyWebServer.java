@@ -7,27 +7,33 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import com.mycompany.app.Game.Pente.PenteGameController;
-import com.mycompany.app.WebServer.Namespace;
 import com.mycompany.app.WebServer.PacketHandler.InvalidPacketConstructionException;
 
 
 public class MyWebServer {
     private final int portNumber;
     private static final int THREAD_POOL_SIZE = 10;
-
-    private Map<InetAddress, ClientProxy> addressToClientProxyMap = new HashMap<>();
     
-    private Namespace baseNamespace;
+    private UnauthedConnectionGroup waitingGroup;
+    private BaseServerGroup baseServerGroup;
 
     public MyWebServer(int portNumber) {
         this.portNumber = portNumber;
 
 
-        // base namespace - it should be the only active namespace at runtime start
-        this.baseNamespace = new Namespace("base", UUID.randomUUID());
+        // waiting group - all connections that have made attempts to connect to the server
+        //                 if a user has not been officially connected, they will appear here
+        this.waitingGroup = new UnauthedConnectionGroup("wait group", UUID.randomUUID());
+
+        // base namespace - grouping of connections that have been authorized by the server
+        this.baseServerGroup = new BaseServerGroup("base group", UUID.randomUUID());
     }
 
+    /**
+     * Starts the webserver on specified port
+     */
     public void start() {
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
