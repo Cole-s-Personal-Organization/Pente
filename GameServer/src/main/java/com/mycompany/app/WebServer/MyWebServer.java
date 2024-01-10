@@ -6,11 +6,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import com.mycompany.app.Game.Pente.PenteGameController;
-import com.mycompany.app.WebServer.PacketHandler.InvalidPacketConstructionException;
-
 
 public class MyWebServer {
     private final int portNumber;
@@ -50,20 +45,101 @@ public class MyWebServer {
         }
     }
 
-    public Packet processRawStringPacket(String rawStringPacket) {
+    public void processRawStringPacket(Socket senderSocket, String rawStringPacket) {
         Packet packet = null;
 
         try {
-            packet = PacketHandler.parsePacket(rawStringPacket);
-            // String intendedNamespace = packet.namespace;
-            // String[] intendedNamespaceStrArr = intendedNamespace.split("/"); 
-            // baseNamespace.routeCommand(intendedNamespace, message);
+            packet = new Packet.PacketBuilder(rawStringPacket)
+                .setSenderSocketAddress(senderSocket.getInetAddress())
+                .build();
 
-        } catch (InvalidPacketConstructionException e) {
+        } catch (Packet.InvalidPacketConstructionException e) {
             // TODO: handle exception
+        } catch (IOException e) {
+            // TODO: handle exception
+            return;
         }
 
-        return packet;
+
+        AbstractNamespace targetNamespace;
+
+        try {
+            targetNamespace = getTargetNamespace(packet.namespacePath);
+        } catch (NoSuchElementException e) {
+            // TODO: handle exception
+
+            return;
+        }
+        
+        Packet responsePacket = targetNamespace.handlePacket(packet);
+
+        // get all sockets which need to be written to 
+    }
+
+    /**
+     * Send message to client within namespace
+     * @param message
+     * @param clientId
+     */
+    public void sendMessage(Packet message, UUID sessionId) {
+        Socket socket = this.sessionIdToClientProxyMap.get(sessionId).;
+
+        try {
+            OutputStream outputStream = socket.getOutputStream();
+
+            outputStream.write(message.toSendString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Send message to all clients in namespace as well as children
+     * @param message
+     */
+    public void broadcastMessage(Packet message) {
+        List<ClientInstance> clients = new ArrayList<>(this.clientIdToInstanceMap.values());
+
+        try {
+            for (ClientInstance clientInstance : clients) {
+                OutputStream outputStream = clientInstance.clientSocket.getOutputStream();
+
+                outputStream.write(message.toSendString().getBytes());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private AbstractNamespace getTargetNamespace(String[] namespacePath) throws NoSuchElementException {
+        AbstractNamespace currNamespace = this.baseServerGroup;
+
+        for (String path : namespacePath) {
+            // when we're here, we have another child to find 
+            boolean nextChildNamespaceFound = false;
+
+            if (currNamespace.childrenNamespaces.length <= 0) {
+                throw new NoSuchElementException();
+            }
+
+            int childNamespaceIterator = 0;
+            AbstractNamespace childNamespace; 
+
+            while(currNamespace.childrenNamespaces.length <= childNamespaceIterator) {
+                childNamespace = currNamespace.childrenNamespaces[childNamespaceIterator];
+                if (childNamespace.name == path) {
+                    currNamespace = childNamespace;
+                    nextChildNamespaceFound = true;
+                    break;
+                }
+            }
+
+            if (!nextChildNamespaceFound) {
+                throw new NoSuchElementException();
+            }
+        }
+
+        return currNamespace;
     }
 
 
@@ -78,14 +154,6 @@ public class MyWebServer {
             this.clientSocket = clientSocket;
         }
 
-        private void routePacketBasedOnClientDiscoveryStatus(Packet packet) {
-            // do we know who this is
-            InetAddress clientAddress = this.clientSocket.getInetAddress();
-            boolean isClientConnected = isClientConnectedToServer(clientAddress);
-
-            
-        }
-
         @Override
         public void run() {
             System.out.println("Connection established with " + this.clientSocket.getInetAddress());
@@ -94,12 +162,9 @@ public class MyWebServer {
                 String rawInputLine;
                 
                 while((rawInputLine = reader.readLine()) != null) {
-                    Packet incomingPacket = processRawStringPacket(rawInputLine);
-
-                    if (incomingPacket != null) {
-                        routePacketBasedOnClientDiscoveryStatus(incomingPacket);
-                    }
+                    processRawStringPacket(this.clientSocket, rawInputLine);
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {

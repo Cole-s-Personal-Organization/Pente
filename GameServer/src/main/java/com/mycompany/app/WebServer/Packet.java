@@ -93,16 +93,17 @@ public class Packet {
     }
 
     public static class PacketBuilder {
+        // essential
         private String namespace; 
         private String command;     
+
+        // optional
         private InetAddress senderSocketAddress;
         private JsonNode data;
 
-        public PacketBuilder(String namespace, String command, InetAddress address, JsonNode data) {
+        public PacketBuilder(String namespace, String command) {
             this.namespace = namespace;
             this.command = command;
-            this.senderSocketAddress = address;
-            this.data = data;
         }
 
 

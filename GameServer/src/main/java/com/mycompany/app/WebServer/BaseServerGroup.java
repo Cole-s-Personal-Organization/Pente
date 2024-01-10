@@ -14,15 +14,21 @@ public class BaseServerGroup extends AbstractNamespace {
     //      we can keep active sessionId's for all namespaces here to prevent id clashes
     private Map<InetAddress, UUID> activateInetAddressToSessionIds;
 
-    public BaseServerGroup(String name, UUID id) {
-        super(name, id);
+    /**
+     * Note parent namespace for BaseServerGroup should always be null.
+     * @param parentNamespace
+     * @param name
+     * @param id
+     */
+    public BaseServerGroup(AbstractNamespace parentNamespace, String name, UUID id) {
+        super(parentNamespace, name, id);
         
         this.activateInetAddressToSessionIds = new HashMap<>();
     }
 
     @Override
     public void disconnectClient(UUID clientSessionId) {
-        // TODO Auto-generated method stub
+        // this.activateInetAddressToSessionIds.
         
     }
 
@@ -32,12 +38,17 @@ public class BaseServerGroup extends AbstractNamespace {
         
     }
 
+    private boolean isPacketSenderConnected(Packet p) {
+        return this.activateInetAddressToSessionIds.containsKey(p.senderSocketAddress);
+    }
+
     @Override
-    public void handlePacket(Packet p, AbstractNamespace n) {
-        if (p.getSenderSessionId() != null) {
-            handleMessageFrom_Authorized(p, n);
+    public void handlePacket(Packet p) {
+        // route packet to command handlers based on session status
+        if (!isPacketSenderConnected(p)) {
+            handleMessageFrom_Unauthorized(p);
         } else {
-            handleMessageFrom_Unauthorized(p, n);
+            handleMessageFrom_Authorized(p);
         }
     }
 
@@ -46,19 +57,19 @@ public class BaseServerGroup extends AbstractNamespace {
     } 
 
     /**
-     * 
+     * Handles a packet sent from an authorized sender that already has a session.
      * @param p
      * @param n
      */
-    private void handleMessageFrom_Authorized(Packet p, AbstractNamespace n) {
-        UUID senderSessionId = p.getSenderSessionId();
+    private void handleMessageFrom_Authorized(Packet p) {
+        UUID senderSessionId = this.activateInetAddressToSessionIds.get(p.senderSocketAddress);
         if (senderSessionId == null) { 
             return;
         } 
 
-        switch (p.getCommand()) {
-            case "GRREEETINGS": // welcome command to the current namespace
-                connectClient(senderSessionId);
+        switch (p.command) {
+            case "":
+                
                 break;
         
             default:
@@ -66,26 +77,26 @@ public class BaseServerGroup extends AbstractNamespace {
         }
     }
 
-    private void handleMessageFrom_Unauthorized(Packet p, AbstractNamespace n) {
-        JsonNode payload = p.getData();
+    private void handleMessageFrom_Unauthorized(Packet p) {
+        JsonNode payload = p.data;
         String clientName = payload.get("clientName").asText();
-        InetAddress ipAddress = InetAddress.getByName(payload.get("ipAddress").asText());
         
-        switch (p.getCommand()) {
+        switch (p.command) {
             case "GRREEETINGS":
-                UUID clientId = UUID.randomUUID();
+                
+                UUID clientId = getClientID();
 
                 // create clientProxy
-                ClientProxy proxy = new ClientProxy(ipAddress, clientName, clientId);
+                ClientProxy proxy = new ClientProxy(p.senderSocketAddress, clientName, clientId);
 
 
                 // enter client into base level namespace
                 UUID sessionId = this.rollNewUniqueSessionID();
-                this.activateSessionIds.add(sessionId);
+                this.activateInetAddressToSessionIds.put(p.senderSocketAddress, sessionId);
                 this.connectClient(sessionId, proxy);
 
                 // welcome client - use connected base controller to send welcome message
-                Packet welcomePacket = null;
+                Packet welcomePacket = this.createWelcomePacket(clientName);
                 this.sendMessage(welcomePacket, sessionId);
 
 
@@ -97,18 +108,24 @@ public class BaseServerGroup extends AbstractNamespace {
                 break;
 
             default:
-                System.out.println("Bad incoming packet from unknown client at socket " + ipAddress.toString());
+                System.out.println("Bad incoming packet from unknown client at socket " + p.senderSocketAddress.toString());
                 break;
         }
     }
 
     private UUID rollNewUniqueSessionID() {
         UUID sessionId = UUID.randomUUID();
+        Collection<UUID> takenSessionIds = this.activateInetAddressToSessionIds.values();
 
-        while(this.activateSessionIds.contains(sessionId)) {
+        while(takenSessionIds.contains(sessionId)) {
             sessionId = UUID.randomUUID();
         }
 
         return sessionId;
+    }
+
+    private UUID getClientID() {
+        // for now just set to a random id, needs to change later if we plan to make users
+        return UUID.randomUUID();
     }
 }
