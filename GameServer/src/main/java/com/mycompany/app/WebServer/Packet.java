@@ -1,8 +1,10 @@
 package com.mycompany.app.WebServer;
 
 import java.util.*;
+import java.io.IOException;
 import java.net.*;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Packet {
 
@@ -14,37 +16,43 @@ public class Packet {
 
     // destination address of logical handler, e.g. groups, game. 
     //      This will determine the location of the end interpreter used to handle the message.
-    private String[] namespacePath; 
+    public final String[] namespacePath; 
 
     // /group1/team1/
     
     // defines the packet type
     //  within the namespace grouping, helps with identification/interpretation of data
-    private String command;     
+    public final String command;     
 
 
-    // attached to packet to denote if sender is valid or not
-    // used for authorization and connection purposes
-    private Boolean senderValidated = false;
+    // NOTE: this should NEVER be sent over sockets, this data will be attached only on the server-side
+    //       to help with processing
+    public final InetAddress senderSocketAddress;
 
 
     // any attached data to the message
     //  UNPARSED, up to the reciever to make sense of it
-    private JsonNode data;
+    public final JsonNode data;
 
 
 
-    public Packet(String namespacePath, String command, JsonNode data) {
-        this.namespacePath = namespacePath.split("/");
-        this.command = command;
-        this.data = data;
-    } 
+    private Packet(PacketBuilder builder) throws InvalidPacketConstructionException {
+        List<String> missingAttributes = new ArrayList<String>(); // list used to collect the names of all missing attributes for error printing
+        
+        // throw error if missing required info
+        if (builder.command == null) { missingAttributes.add("command"); }
+        if (builder.namespace == null) { missingAttributes.add("namespace"); }
+        if (builder.senderSocketAddress == null) { missingAttributes.add("senderSocketAddress"); }
+        if (builder.data == null) { missingAttributes.add("data"); }
+        if (!missingAttributes.isEmpty()) {
+            String missingAttributeString = missingAttributes.toString();
+            throw new InvalidPacketConstructionException("Error: missing " + missingAttributeString + " attribute in raw message. Cannot construct Message object.");
+        }
 
-    public Packet(String namespacePath, String command, JsonNode data, Boolean senderValidated) {
-        this.namespacePath = namespacePath.split("/");
-        this.command = command;
-        this.data = data;
-        this.senderValidated = senderValidated;
+        this.namespacePath = builder.namespace.split("/");
+        this.command = builder.command;
+        this.senderSocketAddress = builder.senderSocketAddress;
+        this.data = builder.data;
     } 
 
     /**
@@ -80,23 +88,114 @@ public class Packet {
         String sendString = "{" 
             + "\"namespace\":\"" + getStringifiedNamespace() + "\","
             + "\"command\":\"" + this.command + "\","
-            + "\"validatedUser\":\"" + this.senderValidated + "\","
             + "\"data\":\"" + this.data + "\"";
         return sendString + "}";
     }
 
-    public String[] getNamespacePath() {
-        return namespacePath;
+    public static class PacketBuilder {
+        private String namespace; 
+        private String command;     
+        private InetAddress senderSocketAddress;
+        private JsonNode data;
+
+        public PacketBuilder(String namespace, String command, InetAddress address, JsonNode data) {
+            this.namespace = namespace;
+            this.command = command;
+            this.senderSocketAddress = address;
+            this.data = data;
+        }
+
+
+        /**
+         * Helper function to remove '\"' from either end of a string.
+         * @param jsonStr
+         * @return
+         */
+        public static String removeQuotesFromStringCastedJson(String jsonStr) {
+            boolean isDoubleQuoted = jsonStr.startsWith("\"") && jsonStr.endsWith("\"");
+            boolean isSingleQuoted = (jsonStr.startsWith("\"") && jsonStr.endsWith("\""));
+            int strLen = jsonStr.length();
+
+            if((isSingleQuoted || isDoubleQuoted) && strLen > 1) {
+                return jsonStr.substring(1, strLen - 1);
+            }
+            return jsonStr;
+        }
+
+        /**
+         * Parses, with a jackson object mapper, packet information with 
+         * This takes place in a constructor because this parse should only take place on initial object construction.
+         * @param rawStringifiedPacket
+         */
+        public PacketBuilder(String rawStringifiedPacket) throws IOException {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            JsonNode messageNode;
+    
+            try {
+                messageNode = objectMapper.readTree(rawStringifiedPacket);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw e;
+            }
+    
+            // expects only namespace, command, and data
+            JsonNode extractedNamespace = messageNode.get("namespace");
+            JsonNode extractedCommand = messageNode.get("command");
+            JsonNode extractedData = messageNode.get("data");
+
+            String namespace = (extractedNamespace != null) 
+                ? (removeQuotesFromStringCastedJson(extractedNamespace.toString())) 
+                : (null); 
+            String command = (extractedCommand != null) 
+                ? (removeQuotesFromStringCastedJson(extractedCommand.toString())) 
+                : (null); 
+    
+            String stringifiedData = (extractedData != null) 
+                ? removeQuotesFromStringCastedJson(extractedData.toString())
+                : (null); 
+            JsonNode dataNode = objectMapper.createObjectNode();
+    
+            try {
+                dataNode = objectMapper.readTree(stringifiedData);
+            } catch (IOException e) {
+                System.out.println("Error: issue unwraping and reading data.");
+                throw e;
+            }
+            
+            this.namespace = namespace;
+            this.command = command;
+            this.data = dataNode;
+        }
+
+        public PacketBuilder setNamespace(String namespace) {
+            this.namespace = namespace;
+            return this;
+        } 
+
+        public PacketBuilder setCommand(String command) {
+            this.command = command;
+            return this;
+        }
+
+        public PacketBuilder setSenderSocketAddress(InetAddress senderSocketAddress) {
+            this.senderSocketAddress = senderSocketAddress;
+            return this;
+        }
+
+        public PacketBuilder setData(JsonNode data) {
+            this.data = data;
+            return this;
+        }
+
+        public Packet build() throws InvalidPacketConstructionException {
+            return new Packet(this);
+        }
     }
 
-    public String getCommand() {
-        return command;
-    }
-
-    public Boolean getSenderValidated() {
-        return senderValidated;
-    }
-    public JsonNode getData() {
-        return data;
+    public static class InvalidPacketConstructionException extends Exception {
+        public InvalidPacketConstructionException(String errorMessage) {
+            super(errorMessage);
+        }
     }
 }

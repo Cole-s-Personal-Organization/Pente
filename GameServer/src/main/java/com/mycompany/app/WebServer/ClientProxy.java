@@ -38,4 +38,20 @@ public class ClientProxy {
 
         return (JsonNode)node;
     }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public InetAddress getSockInetAddress() {
+        return sockInetAddress;
+    }
+
+    public ReplicationManagerService getReplicationManagerService() {
+        return replicationManagerService;
+    }
 }

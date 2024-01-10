@@ -10,9 +10,14 @@ import java.io.*;
 
 public class BaseServerGroup extends AbstractNamespace {
 
+    // because this is the base namespace, all users will be entered in here on connection
+    //      we can keep active sessionId's for all namespaces here to prevent id clashes
+    private Map<InetAddress, UUID> activateInetAddressToSessionIds;
+
     public BaseServerGroup(String name, UUID id) {
         super(name, id);
         
+        this.activateInetAddressToSessionIds = new HashMap<>();
     }
 
     @Override
@@ -22,8 +27,9 @@ public class BaseServerGroup extends AbstractNamespace {
     }
 
     @Override
-    public void connectClient(UUID clientSessionId) {
-        this.
+    public void connectClient(UUID sessionId, ClientProxy clientInfo) {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
@@ -34,6 +40,10 @@ public class BaseServerGroup extends AbstractNamespace {
             handleMessageFrom_Unauthorized(p, n);
         }
     }
+
+    public boolean isClientConnectedToServer(InetAddress address) {
+        return (this.activateInetAddressToSessionIds.containsKey(address));
+    } 
 
     /**
      * 
@@ -57,11 +67,12 @@ public class BaseServerGroup extends AbstractNamespace {
     }
 
     private void handleMessageFrom_Unauthorized(Packet p, AbstractNamespace n) {
+        JsonNode payload = p.getData();
+        String clientName = payload.get("clientName").asText();
+        InetAddress ipAddress = InetAddress.getByName(payload.get("ipAddress").asText());
+        
         switch (p.getCommand()) {
             case "GRREEETINGS":
-                JsonNode payload = p.getData();
-                String clientName = payload.get("clientName").asText();
-                InetAddress ipAddress = InetAddress.getByName(payload.get("ipAddress").asText());
                 UUID clientId = UUID.randomUUID();
 
                 // create clientProxy
@@ -69,22 +80,35 @@ public class BaseServerGroup extends AbstractNamespace {
 
 
                 // enter client into base level namespace
-                this.baseNamespace.connectClient(ipAddress);
+                UUID sessionId = this.rollNewUniqueSessionID();
+                this.activateSessionIds.add(sessionId);
+                this.connectClient(sessionId, proxy);
 
                 // welcome client - use connected base controller to send welcome message
-                this.baseNamespace.controller.welcomeNewClient();
+                Packet welcomePacket = null;
+                this.sendMessage(welcomePacket, sessionId);
 
 
                 // init clientProxy replication manager
                 ReplicationManagerService rManagerService = new ReplicationManagerService();
                 proxy.setReplicationManagerService(rManagerService);
 
-                this.addressToClientProxyMap.put(fromAddress, proxy);
+                this.sessionIdToClientProxyMap.put(sessionId, proxy);
                 break;
 
             default:
-                System.out.println("Bad incoming packet from unknown client at socket " + fromAddress.toString());
+                System.out.println("Bad incoming packet from unknown client at socket " + ipAddress.toString());
                 break;
         }
+    }
+
+    private UUID rollNewUniqueSessionID() {
+        UUID sessionId = UUID.randomUUID();
+
+        while(this.activateSessionIds.contains(sessionId)) {
+            sessionId = UUID.randomUUID();
+        }
+
+        return sessionId;
     }
 }

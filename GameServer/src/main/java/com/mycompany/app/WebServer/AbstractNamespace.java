@@ -29,8 +29,8 @@ public abstract class AbstractNamespace {
     }
 
     public abstract void handlePacket(Packet p, AbstractNamespace n);
-    public abstract void connectClient(UUID clientId);
-    public abstract void disconnectClient(UUID clientId);
+    public abstract void connectClient(UUID sessionId, ClientProxy clientInfo);
+    public abstract void disconnectClient(UUID sessionId);
 
 
     /**
