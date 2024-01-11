@@ -5,92 +5,136 @@ import static org.junit.Assert.*;
 import java.util.*;
 import java.io.IOException;
 import java.net.*;
-import java.util.HashMap;
+
 import org.junit.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycompany.app.WebServer.Packet;
 
 public class PacketTest {
+    @Test
+    public void testValidPacketConstruction() throws Packet.InvalidPacketConstructionException {
+        String namespace = "/group1/team1/";
+        String command = "move";
+        UUID clientSessionId = UUID.randomUUID();
+        JsonNode data = new ObjectMapper().createObjectNode();
+
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(namespace, command)
+                .setClientSessionId(clientSessionId)
+                .setData(data);
+
+        Packet packet = builder.build();
+
+        assertArrayEquals(namespace.split("/"), packet.namespacePath);
+        assertEquals(command, packet.command);
+        assertEquals(clientSessionId, packet.clientSessionId);
+        assertEquals(data, packet.data);
+    }
 
     @Test
-    public void testPacketCreation() throws UnknownHostException, IOException, Packet.InvalidPacketConstructionException {
-        // Create a sample JSON data
-        String jsonData = "{\"key\":\"value\"}";
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode dataNode = objectMapper.readTree(jsonData);
+    public void testPacketStringification() throws Packet.InvalidPacketConstructionException {
+        String namespace = "/group1/team1/";
+        String command = "move";
+        UUID clientSessionId = UUID.randomUUID();
+        JsonNode data = new ObjectMapper().createObjectNode();
 
-        // Create a Packet using the PacketBuilder
-        Packet.PacketBuilder packetBuilder = new Packet.PacketBuilder("/group1/team1", "command", InetAddress.getLocalHost(), dataNode);
-        Packet packet = packetBuilder.build();
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(namespace, command)
+                .setClientSessionId(clientSessionId)
+                .setData(data);
 
-        // Check if the packet is not null
-        assertNotNull(packet);
+        Packet packet = builder.build();
 
-        // Check if the namespace is correctly set
-        assertEquals("/group1/team1/", packet.getStringifiedNamespace());
-
-        // Check if the command is correctly set
-        assertEquals("command", packet.command);
-
-        // Check if the sender socket address is correctly set
-        assertEquals(InetAddress.getLocalHost(), packet.senderSocketAddress);
-
-        // Check if the data is correctly set
-        assertEquals(dataNode, packet.data);
+        String expectedSendString = "{\"namespace\":\"" + namespace + "\",\"command\":\"" + command + "\",\"data\":\"" + data + "\"}";
+        assertEquals(expectedSendString, packet.toSendString());
     }
 
     @Test(expected = Packet.InvalidPacketConstructionException.class)
-    public void testInvalidPacketCreation() throws UnknownHostException, Packet.InvalidPacketConstructionException {
-        // Try to create a packet with missing required attributes, should throw an exception
-        Packet.PacketBuilder packetBuilder = new Packet.PacketBuilder("/group1/team1", null, InetAddress.getLocalHost(), null);
-        packetBuilder.build();
+    public void testMissingAttributeConstruction() throws IOException, Packet.InvalidPacketConstructionException {
+        String namespace = "/group1/team1/";
+        String command = "move";
+        UUID clientSessionId = UUID.randomUUID();
+
+        // Missing data attribute intentionally
+        new Packet.PacketBuilder(namespace, command)
+                    .setClientSessionId(clientSessionId)
+                    .build();
     }
 
     @Test
-    public void testStringifyNamespace() throws UnknownHostException {
-        // Create a Packet with a specific namespace
-        Packet.PacketBuilder packetBuilder = new Packet.PacketBuilder("/group1/team1", "command", InetAddress.getLocalHost(), null);
-        Packet packet = null;
-        try {
-            packet = packetBuilder.build();
-        } catch (Packet.InvalidPacketConstructionException e) {
-            e.printStackTrace();
-        }
+    public void testStringifiedPacketConstruction() throws IOException, Packet.InvalidPacketConstructionException {
+        String rawStringifiedPacket = "{\"namespace\":\"/group1/team1/\",\"command\":\"move\",\"data\":\"{}\"}";
 
-        // Check if the stringifyNamespace function works as expected
-        assertEquals("/group1/team1/", packet.getStringifiedNamespace());
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(rawStringifiedPacket);
+        Packet packet = builder.build();
+
+        assertArrayEquals("/group1/team1/".split("/"), packet.namespacePath);
+        assertEquals("move", packet.command);
+        assertEquals(UUID.fromString("00000000-0000-0000-0000-000000000000"), packet.clientSessionId);
+        assertEquals(new ObjectMapper().createObjectNode(), packet.data);
     }
 
     @Test
-    public void testToPrettyPrintString() throws UnknownHostException, IOException,  Packet.InvalidPacketConstructionException {
-        // Create a sample JSON data
-        String jsonData = "{\"key\":\"value\"}";
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode dataNode = objectMapper.readTree(jsonData);
+    public void testEmptyNamespaceStringification() throws Packet.InvalidPacketConstructionException {
+        String namespace = "";
+        String command = "join";
+        UUID clientSessionId = UUID.randomUUID();
+        JsonNode data = new ObjectMapper().createObjectNode();
 
-        // Create a Packet using the PacketBuilder
-        Packet.PacketBuilder packetBuilder = new Packet.PacketBuilder("/group1/team1", "command", InetAddress.getLocalHost(), dataNode);
-        Packet packet = packetBuilder.build();
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(namespace, command)
+                .setClientSessionId(clientSessionId)
+                .setData(data);
 
-        // Check if the toPrettyPrintString function works as expected
-        String expectedString = "Message: {\n/group1/team1/command\n" + "data: " + dataNode.toString() + "\n}";
-        assertEquals(expectedString, packet.toPrettyPrintString());
+        Packet packet = builder.build();
+
+        String expectedSendString = "{\"namespace\":\"\",\"command\":\"" + command + "\",\"data\":\"" + data + "\"}";
+        assertEquals(expectedSendString, packet.toSendString());
     }
 
     @Test
-    public void testToSendString() throws UnknownHostException, IOException, Packet.InvalidPacketConstructionException {
-        // Create a sample JSON data
-        String jsonData = "{\"key\":\"value\"}";
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode dataNode = objectMapper.readTree(jsonData);
+    public void testNullDataStringification() throws Packet.InvalidPacketConstructionException {
+        String namespace = "/lobby/";
+        String command = "chat";
+        UUID clientSessionId = UUID.randomUUID();
 
-        // Create a Packet using the PacketBuilder
-        Packet.PacketBuilder packetBuilder = new Packet.PacketBuilder("/group1/team1", "command", InetAddress.getLocalHost(), dataNode);
-        Packet packet = packetBuilder.build();
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(namespace, command)
+                .setClientSessionId(clientSessionId);
 
-        // Check if the toSendString function works as expected
-        String expectedString = "{\"namespace\":\"/group1/team1/\",\"command\":\"command\",\"data\":\"" + dataNode.toString() + "\"}";
-        assertEquals(expectedString, packet.toSendString());
+        Packet packet = builder.build();
+
+        String expectedSendString = "{\"namespace\":\"" + namespace + "\",\"command\":\"" + command + "\",\"data\":null}";
+        assertEquals(expectedSendString, packet.toSendString());
+    }
+
+    @Test(expected = IOException.class)
+    public void testInvalidStringifiedPacket() throws IOException {
+        // Invalid JSON format with a missing comma
+        String rawStringifiedPacket = "{\"namespace\":\"/game/\"\"command\":\"start\",\"data\":\"{}\"}";
+
+        new Packet.PacketBuilder(rawStringifiedPacket);
+    }
+
+    @Test
+    public void testToStringMethod() throws Packet.InvalidPacketConstructionException {
+        String namespace = "/game/";
+        String command = "score";
+        UUID clientSessionId = UUID.randomUUID();
+        JsonNode data = new ObjectMapper().createObjectNode();
+
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(namespace, command)
+                .setClientSessionId(clientSessionId)
+                .setData(data);
+
+        Packet packet = builder.build();
+
+        String expectedToString = "Message: {\n/game/score\n" + "data: " + data.toString() + "\n}";
+        assertEquals(expectedToString, packet.toPrettyPrintString());
+    }
+
+    @Test(expected = Packet.InvalidPacketConstructionException.class)
+    public void testStringifiedPacketConstructionWithMissingNamespace() throws Packet.InvalidPacketConstructionException, IOException {
+        // Missing the "namespace" attribute intentionally
+        String rawStringifiedPacket = "{\"command\":\"jump\",\"data\":\"{}\"}";
+
+        new Packet.PacketBuilder(rawStringifiedPacket);
     }
 }

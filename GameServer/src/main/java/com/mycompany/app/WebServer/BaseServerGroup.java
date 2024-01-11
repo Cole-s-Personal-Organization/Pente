@@ -10,10 +10,6 @@ import java.io.*;
 
 public class BaseServerGroup extends AbstractNamespace {
 
-    // because this is the base namespace, all users will be entered in here on connection
-    //      we can keep active sessionId's for all namespaces here to prevent id clashes
-    private Map<InetAddress, UUID> activateInetAddressToSessionIds;
-
     /**
      * Note parent namespace for BaseServerGroup should always be null.
      * @param parentNamespace
@@ -22,8 +18,6 @@ public class BaseServerGroup extends AbstractNamespace {
      */
     public BaseServerGroup(AbstractNamespace parentNamespace, String name, UUID id) {
         super(parentNamespace, name, id);
-        
-        this.activateInetAddressToSessionIds = new HashMap<>();
     }
 
     @Override
@@ -36,10 +30,6 @@ public class BaseServerGroup extends AbstractNamespace {
     public void connectClient(UUID sessionId, ClientProxy clientInfo) {
         // TODO Auto-generated method stub
         
-    }
-
-    private boolean isPacketSenderConnected(Packet p) {
-        return this.activateInetAddressToSessionIds.containsKey(p.senderSocketAddress);
     }
 
     @Override

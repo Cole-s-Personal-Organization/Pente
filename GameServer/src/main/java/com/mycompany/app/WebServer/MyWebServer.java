@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.mycompany.app.WebServer.Packet.PacketBuilder;
 
 
 public class MyWebServer {
@@ -63,9 +64,15 @@ public class MyWebServer {
         Packet responsePacket = null;
 
         try {
-            packet = new Packet.PacketBuilder(rawStringPacket)
-                .setSenderSocketAddress(senderSocket.getInetAddress())
-                .build();
+            PacketBuilder builder = new Packet.PacketBuilder(rawStringPacket);
+
+            // attach optional session id
+            if (this.activateInetAddressToSessionIds.containsKey(senderSocket.getInetAddress())) {
+                UUID sessionId = this.activateInetAddressToSessionIds.get(senderSocket.getInetAddress());
+                builder.setClientSessionId(sessionId);
+            }
+
+            packet = builder.build();
 
         } catch (Packet.InvalidPacketConstructionException e) {
             // TODO: handle exception
@@ -77,7 +84,7 @@ public class MyWebServer {
         boolean isAuthorized = this.checkMessageSenderAuthorization(senderSocket);
  
         if(!isAuthorized) {
-            responsePacket = handleMessageFromUnauthorizedSender(packet); 
+            responsePacket = handleMessageFromUnauthorizedSender(senderSocket, packet); 
             writePacketToSocketStream(senderSocket, responsePacket);
             return;
         }
@@ -184,7 +191,7 @@ public class MyWebServer {
      * from being processed.
      * @param p
      */
-    private Packet handleMessageFromUnauthorizedSender(Packet p) {
+    private Packet handleMessageFromUnauthorizedSender(Socket s, Packet p) {
         JsonNode payload = p.data;
         String clientName = payload.get("clientName").asText();
 
@@ -201,7 +208,7 @@ public class MyWebServer {
 
 
                 // enter client into base level namespace
-                this.activateInetAddressToSessionIds.put(p.senderSocketAddress, sessionId);
+                this.activateInetAddressToSessionIds.put(s.getInetAddress(), sessionId);
                 this.baseServerGroup.connectClient(sessionId, proxy);
 
 
@@ -216,7 +223,7 @@ public class MyWebServer {
                 return welcomePacket;
 
             default:
-                errMsg = "Bad incoming packet from unknown client at socket " + p.senderSocketAddress.toString();
+                errMsg = "Bad incoming packet from unknown client at socket " + s.getInetAddress().toString();
                 System.out.println(errMsg);
                 break;
         }

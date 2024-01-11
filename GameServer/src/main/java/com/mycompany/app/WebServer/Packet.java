@@ -26,8 +26,8 @@ public class Packet {
 
 
     // NOTE: this should NEVER be sent over sockets, this data will be attached only on the server-side
-    //       to help with processing
-    public final InetAddress senderSocketAddress;
+    //       to help with identifying who sent what
+    public final UUID clientSessionId;
 
 
     // any attached data to the message
@@ -42,7 +42,7 @@ public class Packet {
         // throw error if missing required info
         if (builder.command == null) { missingAttributes.add("command"); }
         if (builder.namespace == null) { missingAttributes.add("namespace"); }
-        if (builder.senderSocketAddress == null) { missingAttributes.add("senderSocketAddress"); }
+        if (builder.clientSessionId == null) { missingAttributes.add("clientSessionId"); }
         if (builder.data == null) { missingAttributes.add("data"); }
         if (!missingAttributes.isEmpty()) {
             String missingAttributeString = missingAttributes.toString();
@@ -51,7 +51,7 @@ public class Packet {
 
         this.namespacePath = builder.namespace.split("/");
         this.command = builder.command;
-        this.senderSocketAddress = builder.senderSocketAddress;
+        this.clientSessionId = builder.clientSessionId;
         this.data = builder.data;
     } 
 
@@ -98,7 +98,7 @@ public class Packet {
         private String command;     
 
         // optional
-        private InetAddress senderSocketAddress;
+        private UUID clientSessionId;
         private JsonNode data;
 
         public PacketBuilder(String namespace, String command) {
@@ -179,8 +179,8 @@ public class Packet {
             return this;
         }
 
-        public PacketBuilder setSenderSocketAddress(InetAddress senderSocketAddress) {
-            this.senderSocketAddress = senderSocketAddress;
+        public PacketBuilder setClientSessionId(UUID clientSessionId) {
+            this.clientSessionId = clientSessionId;
             return this;
         }
 
