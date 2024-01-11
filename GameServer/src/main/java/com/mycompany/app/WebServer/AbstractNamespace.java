@@ -56,21 +56,4 @@ public abstract class AbstractNamespace {
 
         return (JsonNode[])jsonSessions.toArray();
     }
-
-    /**
-     * A helper function for meant to standardize welcome packets
-     * @param namespace
-     * @return
-     */
-    protected Packet createWelcomePacket(String namespace) {
-        Packet welcomePacket = null;
-
-        try {
-            welcomePacket = new Packet.PacketBuilder(namespace, "GRRREEETINGS").build();
-        } catch (Packet.InvalidPacketConstructionException e) {
-            
-        }
-
-        return welcomePacket;
-    } 
 }

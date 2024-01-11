@@ -5,32 +5,32 @@ import java.net.*;
 import java.util.*;
 
 import com.mycompany.app.WebServer.AbstractNamespace;
+import com.mycompany.app.WebServer.ClientProxy;
 import com.mycompany.app.WebServer.Packet;
 
 public class PenteServerLobby extends AbstractNamespace {
     
     PenteGameController controller;
 
-    public PenteServerLobby(String name, UUID id) {
-        super(name, id);
+    public PenteServerLobby(AbstractNamespace namespace, String name, UUID id) {
+        super(namespace, name, id);
         this.controller = new PenteGameController();
+    }
+
+    @Override
+    public void connectClient(UUID sessionId, ClientProxy clientInfo) {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
     public void disconnectClient(UUID clientId) {
         // TODO Auto-generated method stub
-        
     }
 
     @Override
-    public void connectClient(UUID clientId) {
+    public Packet handlePacket(Packet p) {
         // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void handlePacket(Packet p, AbstractNamespace n) {
-        // TODO Auto-generated method stub
-        
+        return null;
     }
 }

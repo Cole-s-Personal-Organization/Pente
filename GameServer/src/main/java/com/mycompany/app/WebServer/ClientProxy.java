@@ -13,13 +13,13 @@ import java.net.*;
  * Contains a separate repliction manager for each client, 
  */
 public class ClientProxy {
-    private InetAddress sockInetAddress;
+    private UUID sessionId;
     private String name;
     private UUID id; 
     private ReplicationManagerService replicationManagerService;
 
-    public ClientProxy(InetAddress socketAddress, String name, UUID id) {
-        this.sockInetAddress = socketAddress;
+    public ClientProxy(UUID id, UUID sessionId, String name) {
+        this.sessionId = sessionId;
         this.name = name;
         this.id = id;
     }
@@ -34,7 +34,7 @@ public class ClientProxy {
 
         node.put("clientName", name);
         node.put("clientId", id.toString());
-        node.put("ipAddress", sockInetAddress.toString());
+        // node.put("sessionId", sockInetAddress.toString());
 
         return (JsonNode)node;
     }
@@ -47,8 +47,8 @@ public class ClientProxy {
         return name;
     }
 
-    public InetAddress getSockInetAddress() {
-        return sockInetAddress;
+    public UUID getSessionId() {
+        return sessionId;
     }
 
     public ReplicationManagerService getReplicationManagerService() {

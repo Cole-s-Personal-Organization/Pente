@@ -6,10 +6,19 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 
 public class MyWebServer {
     private final int portNumber;
     private static final int THREAD_POOL_SIZE = 10;
+
+    // webserver keeps track of current sessions of users 
+    // NOTE: in the furture, if we expand this to non-local network, we will need to
+    //       replace InetAddress with clientId
+    private Map<InetAddress, UUID> activateInetAddressToSessionIds;
+
+    private Map<UUID, Socket> sessionIdToSocketMap;
     
     private BaseServerGroup baseServerGroup;
 
@@ -17,7 +26,11 @@ public class MyWebServer {
         this.portNumber = portNumber;
 
         // base namespace - grouping of connections that have been authorized by the server
-        this.baseServerGroup = new BaseServerGroup("base group", UUID.randomUUID());
+        this.baseServerGroup = new BaseServerGroup(null, "base group", UUID.randomUUID());
+
+        this.activateInetAddressToSessionIds = new HashMap<>();
+        this.sessionIdToSocketMap = new HashMap<>();
+
     }
 
     /**
@@ -47,6 +60,7 @@ public class MyWebServer {
 
     public void processRawStringPacket(Socket senderSocket, String rawStringPacket) {
         Packet packet = null;
+        Packet responsePacket = null;
 
         try {
             packet = new Packet.PacketBuilder(rawStringPacket)
@@ -60,6 +74,13 @@ public class MyWebServer {
             return;
         }
 
+        boolean isAuthorized = this.checkMessageSenderAuthorization(senderSocket);
+ 
+        if(!isAuthorized) {
+            responsePacket = handleMessageFromUnauthorizedSender(packet); 
+            writePacketToSocketStream(senderSocket, responsePacket);
+            return;
+        }
 
         AbstractNamespace targetNamespace;
 
@@ -71,46 +92,51 @@ public class MyWebServer {
             return;
         }
         
-        Packet responsePacket = targetNamespace.handlePacket(packet);
+        responsePacket = targetNamespace.handlePacket(packet);
 
         // get all sockets which need to be written to 
     }
 
     /**
-     * Send message to client within namespace
+     * Send message to client
      * @param message
      * @param clientId
      */
-    public void sendMessage(Packet message, UUID sessionId) {
-        Socket socket = this.sessionIdToClientProxyMap.get(sessionId).;
+    public void sendMessage(UUID sessionId, Packet p) {
+        Socket socket = this.sessionIdToSocketMap.get(sessionId);
 
-        try {
-            OutputStream outputStream = socket.getOutputStream();
-
-            outputStream.write(message.toSendString().getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        writePacketToSocketStream(socket, p);
     }
 
     /**
      * Send message to all clients in namespace as well as children
      * @param message
      */
-    public void broadcastMessage(Packet message) {
-        List<ClientInstance> clients = new ArrayList<>(this.clientIdToInstanceMap.values());
+    // public void broadcastMessage(Packet message) {
+    //     List<Sockets> sess = new ArrayList<>(this.clientIdToInstanceMap.values());
 
+    //     for (ClientInstance clientInstance : clients) {
+    //         writePacketToSocketStream(null, message);
+    //     }
+    // }
+
+    private void writePacketToSocketStream(Socket s, Packet p) {
         try {
-            for (ClientInstance clientInstance : clients) {
-                OutputStream outputStream = clientInstance.clientSocket.getOutputStream();
+            OutputStream outputStream = s.getOutputStream();
 
-                outputStream.write(message.toSendString().getBytes());
-            }
+            outputStream.write(p.toSendString().getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+
+    /**
+     * Get a namespace by its namespacePath
+     * @param namespacePath
+     * @return
+     * @throws NoSuchElementException
+     */
     private AbstractNamespace getTargetNamespace(String[] namespacePath) throws NoSuchElementException {
         AbstractNamespace currNamespace = this.baseServerGroup;
 
@@ -142,6 +168,77 @@ public class MyWebServer {
         return currNamespace;
     }
 
+    /**
+     * Check if a socket has been connected to the webserver 
+     * @param s
+     * @return
+     */
+    private boolean checkMessageSenderAuthorization(Socket s) {
+        InetAddress address = s.getInetAddress();
+        return this.activateInetAddressToSessionIds.containsKey(address);
+    }
+
+
+    /**
+     * Exposes the root level join server command, prevents any non joining packets 
+     * from being processed.
+     * @param p
+     */
+    private Packet handleMessageFromUnauthorizedSender(Packet p) {
+        JsonNode payload = p.data;
+        String clientName = payload.get("clientName").asText();
+
+        String errMsg = "";
+        
+        switch (p.command) {
+            case "GRREEETINGS":
+                
+                UUID clientId = getClientID();
+                UUID sessionId = this.rollNewUniqueSessionID();
+
+                // create clientProxy
+                ClientProxy proxy = new ClientProxy(clientId, sessionId, clientName);
+
+
+                // enter client into base level namespace
+                this.activateInetAddressToSessionIds.put(p.senderSocketAddress, sessionId);
+                this.baseServerGroup.connectClient(sessionId, proxy);
+
+
+
+                // init clientProxy replication manager
+                ReplicationManagerService rManagerService = new ReplicationManagerService();
+                proxy.setReplicationManagerService(rManagerService);
+
+                this.baseServerGroup.sessionIdToClientProxyMap.put(sessionId, proxy);
+
+                Packet welcomePacket = PacketHelpers.createWelcomePacket(clientName);
+                return welcomePacket;
+
+            default:
+                errMsg = "Bad incoming packet from unknown client at socket " + p.senderSocketAddress.toString();
+                System.out.println(errMsg);
+                break;
+        }
+
+        return PacketHelpers.createErrorPacket(p, clientName);
+    }
+
+    private UUID rollNewUniqueSessionID() {
+        UUID sessionId = UUID.randomUUID();
+        Collection<UUID> takenSessionIds = this.activateInetAddressToSessionIds.values();
+
+        while(takenSessionIds.contains(sessionId)) {
+            sessionId = UUID.randomUUID();
+        }
+
+        return sessionId;
+    }
+
+    private UUID getClientID() {
+        // for now just set to a random id, needs to change later if we plan to make users
+        return UUID.randomUUID();
+    }
 
 
     /**
