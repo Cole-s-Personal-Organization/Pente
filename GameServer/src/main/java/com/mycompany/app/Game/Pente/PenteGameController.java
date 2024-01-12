@@ -3,6 +3,13 @@ import java.util.HashMap;
 
 import com.mycompany.app.WebServer.Packet;
 
+
+/**
+ * A controller for the pente game.
+ * 
+ * @author Dan
+ * @version 1.0.0
+ */
 public class PenteGameController {
     private PenteGameSettings gameSettings;
     private PenteGameBoardModel model;
@@ -31,10 +38,7 @@ public class PenteGameController {
         this.model = new PenteGameBoardModel();
     }
 
-    /**
-     * takePlayerTurn takes a player's turn and and and
-     * @param turn object containing the player's chosen action on their turn
-     */
+    
     // public void takePlayerTurn(PenteTurn turn) {
     //     model.setMove(turn);
     //     this.playerCaptures[turn.playerNumber] += model.removeCaptured(turn);

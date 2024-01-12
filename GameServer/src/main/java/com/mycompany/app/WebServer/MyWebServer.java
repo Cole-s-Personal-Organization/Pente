@@ -9,7 +9,12 @@ import java.util.concurrent.Executors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mycompany.app.WebServer.Packet.PacketBuilder;
 
-
+/**
+ * Our implementation of a socket-based webserver instance.
+ * 
+ * @author Cole, Dan 
+ * @version 1.0.0
+ */
 public class MyWebServer {
     private final int portNumber;
     private static final int THREAD_POOL_SIZE = 10;
@@ -35,7 +40,7 @@ public class MyWebServer {
     }
 
     /**
-     * Starts the webserver on specified port
+     * Starts the webserver on the port specified.
      */
     public void start() {
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
@@ -59,7 +64,12 @@ public class MyWebServer {
         }
     }
 
-    public void processRawStringPacket(Socket senderSocket, String rawStringPacket) {
+    /**
+     * A helper function which describes how to handle the high level steps of handling a packet within our server.
+     * @param senderSocket A client's Socket.
+     * @param rawStringPacket A raw string representation of a packet.
+     */
+    private void processRawStringPacket(Socket senderSocket, String rawStringPacket) {
         Packet packet = null;
         Packet responsePacket = null;
 
@@ -105,9 +115,9 @@ public class MyWebServer {
     }
 
     /**
-     * Send message to client
-     * @param message
-     * @param clientId
+     * Send a packet based message to client by their sessionId
+     * @param sessionId A client's session UUID.
+     * @param p A packet.
      */
     public void sendMessage(UUID sessionId, Packet p) {
         Socket socket = this.sessionIdToSocketMap.get(sessionId);
@@ -115,10 +125,7 @@ public class MyWebServer {
         writePacketToSocketStream(socket, p);
     }
 
-    /**
-     * Send message to all clients in namespace as well as children
-     * @param message
-     */
+    
     // public void broadcastMessage(Packet message) {
     //     List<Sockets> sess = new ArrayList<>(this.clientIdToInstanceMap.values());
 
@@ -127,6 +134,11 @@ public class MyWebServer {
     //     }
     // }
 
+    /**
+     * Writes a packets data to an outgoing socket stream.
+     * @param s A socket.
+     * @param p A packet.
+     */
     private void writePacketToSocketStream(Socket s, Packet p) {
         try {
             OutputStream outputStream = s.getOutputStream();
@@ -140,8 +152,8 @@ public class MyWebServer {
 
     /**
      * Get a namespace by its namespacePath
-     * @param namespacePath
-     * @return
+     * @param namespacePath A namespace split into a list by '/'
+     * @return A namespace that maps to namespacePath
      * @throws NoSuchElementException
      */
     private AbstractNamespace getTargetNamespace(String[] namespacePath) throws NoSuchElementException {
@@ -176,9 +188,9 @@ public class MyWebServer {
     }
 
     /**
-     * Check if a socket has been connected to the webserver 
-     * @param s
-     * @return
+     * Checks if a socket has been connected to the webserver. 
+     * @param s A socket.
+     * @return boolean representing if a socket is connected.
      */
     private boolean checkMessageSenderAuthorization(Socket s) {
         InetAddress address = s.getInetAddress();
@@ -189,7 +201,10 @@ public class MyWebServer {
     /**
      * Exposes the root level join server command, prevents any non joining packets 
      * from being processed.
-     * @param p
+     * 
+     * @param s A socket.
+     * @param p A packet.
+     * @return response packet
      */
     private Packet handleMessageFromUnauthorizedSender(Socket s, Packet p) {
         JsonNode payload = p.data;
@@ -229,6 +244,10 @@ public class MyWebServer {
         return PacketHelpers.createErrorPacket(p, clientName);
     }
 
+    /**
+     * Creates a unique session id for a user.
+     * @return unique user session id
+     */
     private UUID rollNewUniqueSessionID() {
         UUID sessionId = UUID.randomUUID();
         Collection<UUID> takenSessionIds = this.activateInetAddressToSessionIds.values();
@@ -240,6 +259,7 @@ public class MyWebServer {
         return sessionId;
     }
 
+
     private UUID getClientID() {
         // for now just set to a random id, needs to change later if we plan to make users
         return UUID.randomUUID();
@@ -247,7 +267,10 @@ public class MyWebServer {
 
 
     /**
-     * Runnable that handles client connections to the server
+     * Runnable that handles client connections to the server.
+     * 
+     * @author Cole, Dan 
+     * @version 1.0.0
      */
     private class ServerRunnable implements Runnable {
         private Socket clientSocket;
@@ -256,6 +279,9 @@ public class MyWebServer {
             this.clientSocket = clientSocket;
         }
 
+        /**
+         * Protocol that is run and sustained for each connection with the webserver.
+         */
         @Override
         public void run() {
             System.out.println("Connection established with " + this.clientSocket.getInetAddress());

@@ -6,6 +6,13 @@ import java.util.*;
 
 import com.mycompany.app.Game.Pente.PenteGameController;
 
+
+/**
+ * A namespace representaion of a pente lobby.
+ * 
+ * @author Dan, Cole
+ * @version 1.0.0
+ */
 public class PenteServerLobby extends AbstractNamespace {
     
     PenteGameController controller;
