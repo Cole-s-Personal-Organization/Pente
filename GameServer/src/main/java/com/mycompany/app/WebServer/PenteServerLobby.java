@@ -1,19 +1,17 @@
-package com.mycompany.app.Game.Pente;
+package com.mycompany.app.WebServer;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import com.mycompany.app.WebServer.AbstractNamespace;
-import com.mycompany.app.WebServer.ClientProxy;
-import com.mycompany.app.WebServer.Packet;
+import com.mycompany.app.Game.Pente.PenteGameController;
 
 public class PenteServerLobby extends AbstractNamespace {
     
     PenteGameController controller;
 
-    public PenteServerLobby(AbstractNamespace namespace, String name, UUID id) {
-        super(namespace, name, id);
+    public PenteServerLobby(UUID namespaceId, String name, AbstractNamespace parentNamespace) {
+        super(namespaceId, name, parentNamespace);
         this.controller = new PenteGameController();
     }
 

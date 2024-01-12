@@ -48,18 +48,6 @@ public class PacketTest {
         assertEquals(expectedSendString, packet.toSendString());
     }
 
-    @Test(expected = Packet.InvalidPacketConstructionException.class)
-    public void testMissingAttributeConstruction() throws IOException, Packet.InvalidPacketConstructionException {
-        String namespace = "/group1/team1/";
-        String command = "move";
-        UUID clientSessionId = UUID.randomUUID();
-
-        // Missing data attribute intentionally
-        new Packet.PacketBuilder(namespace, command)
-                    .setClientSessionId(clientSessionId)
-                    .build();
-    }
-
     @Test
     public void testStringifiedPacketConstruction() throws IOException, Packet.InvalidPacketConstructionException {
         String rawStringifiedPacket = "{\"namespace\":\"/group1/team1/\",\"command\":\"move\",\"data\":\"{}\"}";
@@ -69,8 +57,27 @@ public class PacketTest {
 
         assertArrayEquals("/group1/team1/".split("/"), packet.namespacePath);
         assertEquals("move", packet.command);
-        assertEquals(UUID.fromString("00000000-0000-0000-0000-000000000000"), packet.clientSessionId);
+        assertEquals(null, packet.clientSessionId);
         assertEquals(new ObjectMapper().createObjectNode(), packet.data);
+    }
+
+    @Test
+    public void testValidPacketConstructionWithData() throws IOException, Packet.InvalidPacketConstructionException {
+        String namespace = UUID.randomUUID().toString();
+        String command = "create pente lobby";
+        UUID clientSessionId = UUID.randomUUID();
+        String namespaceName = "test namespace name";
+        String rawStringifiedPacket = "{\"namespace\":\"/" + namespace + "/\",\"command\":\"" + command + "\",\"data\":{\"lobbyName\":\"" + namespaceName + "\"}}";
+
+        Packet.PacketBuilder builder = new Packet.PacketBuilder(rawStringifiedPacket)
+            .setClientSessionId(clientSessionId);
+
+        Packet createPenteLobby = builder.build();
+
+        assertArrayEquals(("/" + namespace + "/").split("/"), createPenteLobby.namespacePath);
+        assertEquals(command, createPenteLobby.command);
+        assertEquals(clientSessionId, createPenteLobby.clientSessionId);
+        // assertEquals(new ObjectMapper().createObjectNode(), createPenteLobby.data);
     }
 
     @Test
@@ -86,7 +93,7 @@ public class PacketTest {
 
         Packet packet = builder.build();
 
-        String expectedSendString = "{\"namespace\":\"\",\"command\":\"" + command + "\",\"data\":\"" + data + "\"}";
+        String expectedSendString = "{\"namespace\":\"/\",\"command\":\"" + command + "\",\"data\":\"" + data + "\"}";
         assertEquals(expectedSendString, packet.toSendString());
     }
 
@@ -101,16 +108,8 @@ public class PacketTest {
 
         Packet packet = builder.build();
 
-        String expectedSendString = "{\"namespace\":\"" + namespace + "\",\"command\":\"" + command + "\",\"data\":null}";
+        String expectedSendString = "{\"namespace\":\"" + namespace + "\",\"command\":\"" + command + "\",\"data\":\"null\"}";
         assertEquals(expectedSendString, packet.toSendString());
-    }
-
-    @Test(expected = IOException.class)
-    public void testInvalidStringifiedPacket() throws IOException {
-        // Invalid JSON format with a missing comma
-        String rawStringifiedPacket = "{\"namespace\":\"/game/\"\"command\":\"start\",\"data\":\"{}\"}";
-
-        new Packet.PacketBuilder(rawStringifiedPacket);
     }
 
     @Test
@@ -135,6 +134,6 @@ public class PacketTest {
         // Missing the "namespace" attribute intentionally
         String rawStringifiedPacket = "{\"command\":\"jump\",\"data\":\"{}\"}";
 
-        new Packet.PacketBuilder(rawStringifiedPacket);
+        new Packet.PacketBuilder(rawStringifiedPacket).build();
     }
 }

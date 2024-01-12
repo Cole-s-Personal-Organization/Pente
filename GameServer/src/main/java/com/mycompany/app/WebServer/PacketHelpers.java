@@ -15,7 +15,7 @@ public class PacketHelpers {
         Packet welcomePacket = null;
 
         try {
-            welcomePacket = new Packet.PacketBuilder(namespace, "GRRREEETINGS").build();
+            welcomePacket = new Packet.PacketBuilder(namespace, "Hi There").build();
         } catch (Packet.InvalidPacketConstructionException e) {
             
         }
