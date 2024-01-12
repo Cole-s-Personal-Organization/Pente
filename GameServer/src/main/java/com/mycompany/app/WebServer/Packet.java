@@ -6,6 +6,13 @@ import java.net.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+
+/**
+ * A representation of a packet within our internal web server.
+ * 
+ * @author Cole
+ * @version 1.0.0
+ */
 public class Packet {
 
     // helps with ordering of incoming packets
@@ -56,8 +63,8 @@ public class Packet {
     } 
 
     /**
-     * Create a stringifyied namespace using '/' to separate paths
-     * @return
+     * Create a stringified namespace using '/' to separate paths
+     * @return stringified namespace
      */
     public String getStringifiedNamespace() {
         if (this.namespacePath == null || this.namespacePath.length == 0) {
@@ -77,13 +84,21 @@ public class Packet {
         return result.toString();
     }
 
+    /**
+     * Stringified packet used primarily for printing in an readable format for debugging.
+     * @return stringified packet
+     */
     public String toPrettyPrintString() {
-        return "Message: {\n" 
+        return "Packet: {\n" 
                 + getStringifiedNamespace() + this.command + "\n"
                 + "data: " + this.data.toString() + "\n"
                 + "}";
     }
 
+    /**
+     * Stringified packet used for writing to outgoing socket streams.
+     * @return stringified packet
+     */
     public String toSendString() {
         String sendString = "{" 
             + "\"namespace\":\"" + getStringifiedNamespace() + "\","
@@ -92,6 +107,13 @@ public class Packet {
         return sendString + "}";
     }
 
+
+    /**
+     * A representation of a packet within our internal web server.
+     * 
+     * @author Cole
+     * @version 1.0.0
+     */
     public static class PacketBuilder {
         // essential
         private String namespace; 
@@ -109,8 +131,8 @@ public class Packet {
 
         /**
          * Helper function to remove '\"' from either end of a string.
-         * @param jsonStr
-         * @return
+         * @param jsonStr A stringified json object.
+         * @return a parenthesized string 
          */
         public static String removeQuotesFromStringCastedJson(String jsonStr) {
             boolean isDoubleQuoted = jsonStr.startsWith("\"") && jsonStr.endsWith("\"");
@@ -126,7 +148,7 @@ public class Packet {
         /**
          * Parses, with a jackson object mapper, packet information with 
          * This takes place in a constructor because this parse should only take place on initial object construction.
-         * @param rawStringifiedPacket
+         * @param rawStringifiedPacket A stringified representation of a packet.
          */
         public PacketBuilder(String rawStringifiedPacket) throws IOException {
             ObjectMapper objectMapper = new ObjectMapper();

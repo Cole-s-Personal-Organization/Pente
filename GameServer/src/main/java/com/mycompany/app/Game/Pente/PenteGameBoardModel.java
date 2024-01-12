@@ -4,6 +4,12 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A representation of a Pente Board.
+ * 
+ * @author Dan
+ * @version 1.0.0
+ */
 public class PenteGameBoardModel {
     private PenteBoardIdentifierEnum[][] gameBoard;
     private int cols = 19;
@@ -17,10 +23,15 @@ public class PenteGameBoardModel {
         }
     }
 
-    public void setMove(PenteTurn turn) throws Exception{
+    /**
+     * Play move action, performs validation on said move and then alters the game board.
+     * @param turn a pente turn object
+     * @throws InvalidTurnException
+     */
+    public void setMove(PenteTurn turn) throws InvalidTurnException{
         try {
             this.checkMove(turn);
-        } catch (Exception e) {
+        } catch (InvalidTurnException e) {
             throw e;
         }
         this.gameBoard[turn.posY][turn.posX] = turn.playerNumber;
@@ -204,6 +215,7 @@ public class PenteGameBoardModel {
                 .concat("\n");
         return buildString;
     }
+
     public class InvalidTurnException extends Exception {
         public InvalidTurnException(String e) {
             super(e);

@@ -9,27 +9,56 @@ import com.mycompany.app.WebServer.Packet.PacketBuilder;
 import java.net.*;
 import java.io.*;
 
+
+/**
+ * Represents the base server in which all clients who initially connect, join.
+ * Extension of Abstract Namespace.
+ * 
+ * @author Cole, Dan 
+ * @version 1.0.0
+ */
 public class BaseServerGroup extends AbstractNamespace {
 
     /**
+     * Constructor
      * Note parent namespace for BaseServerGroup should always be null.
-     * @param parentNamespace
-     * @param name
+     * @param namespaceId A UUID referencing the namespace.
+     * @param parentNamespace The parent AbstractNamespace to this namespace.
+     * @param name A string.
      */
     public BaseServerGroup(UUID namespaceId, String name, AbstractNamespace parentNamespace) {
         super(namespaceId, name, parentNamespace);
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * Overridden method to disconnect a client from the base namespace group.
+     * @param sessionId A client's session UUID.
+     */
     @Override
-    public void disconnectClient(UUID clientSessionId) {
-        this.sessionIdToClientProxyMap.remove(clientSessionId);
+    public void disconnectClient(UUID sessionId) {
+        this.sessionIdToClientProxyMap.remove(sessionId);
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * Overridden method to connect a client to the base namespace group.
+     * @param sessionId A client's session UUID object
+     * @param clientInfo A client's ClientProxy object
+     */
     @Override
     public void connectClient(UUID sessionId, ClientProxy clientInfo) {
         this.sessionIdToClientProxyMap.put(sessionId, clientInfo);
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * Overridden method to handle a packet created by a client within the namespace according to the base server group's command list.
+     * @param p A packet.
+     */
     @Override
     public Packet handlePacket(Packet p) {
         Packet responsePacket = null;

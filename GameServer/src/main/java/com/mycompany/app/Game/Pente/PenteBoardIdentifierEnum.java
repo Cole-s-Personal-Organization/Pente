@@ -3,6 +3,9 @@ package com.mycompany.app.Game.Pente;
 /**
  * Used to identify a players identity in a numerical format on the board
  * Right now, Maximum of four players are allowed so only four player enums are used
+ * 
+ * @author Cole
+ * @version 1.0.0
  */
 public enum PenteBoardIdentifierEnum {
     EMPTY {

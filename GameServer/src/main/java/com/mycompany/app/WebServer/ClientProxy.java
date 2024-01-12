@@ -9,8 +9,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.*;
 
 /**
- * Tracks the state of each client.
- * Contains a separate repliction manager for each client, 
+ * A server-side representation of a client that is associated with the server.
+ * 
+ * @author Cole 
+ * @version 1.0.0
  */
 public class ClientProxy {
     private UUID sessionId;
@@ -28,7 +30,10 @@ public class ClientProxy {
         this.replicationManagerService = replicationManagerService;
     }
 
-    
+    /**
+     * returns a json representation of this client proxy object
+     * @return Json client object
+     */
     public JsonNode toJson() {
         ObjectNode node = JsonNodeFactory.instance.objectNode();
 
