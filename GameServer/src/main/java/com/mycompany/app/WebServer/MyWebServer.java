@@ -27,7 +27,7 @@ public class MyWebServer {
         this.portNumber = portNumber;
 
         // base namespace - grouping of connections that have been authorized by the server
-        this.baseServerGroup = new BaseServerGroup(null, "base group", UUID.randomUUID());
+        this.baseServerGroup = new BaseServerGroup(UUID.randomUUID(), "base group", null);
 
         this.activateInetAddressToSessionIds = new HashMap<>();
         this.sessionIdToSocketMap = new HashMap<>();
@@ -151,16 +151,16 @@ public class MyWebServer {
             // when we're here, we have another child to find 
             boolean nextChildNamespaceFound = false;
 
-            if (currNamespace.childrenNamespaces.length <= 0) {
+            if (currNamespace.childrenNamespaces.isEmpty()) {
                 throw new NoSuchElementException();
             }
 
             int childNamespaceIterator = 0;
             AbstractNamespace childNamespace; 
 
-            while(currNamespace.childrenNamespaces.length <= childNamespaceIterator) {
-                childNamespace = currNamespace.childrenNamespaces[childNamespaceIterator];
-                if (childNamespace.name == path) {
+            while(currNamespace.childrenNamespaces.size() <= childNamespaceIterator) {
+                childNamespace = currNamespace.childrenNamespaces.get(childNamespaceIterator);
+                if (childNamespace.getName() == path) {
                     currNamespace = childNamespace;
                     nextChildNamespaceFound = true;
                     break;
@@ -216,8 +216,6 @@ public class MyWebServer {
                 // init clientProxy replication manager
                 ReplicationManagerService rManagerService = new ReplicationManagerService();
                 proxy.setReplicationManagerService(rManagerService);
-
-                this.baseServerGroup.sessionIdToClientProxyMap.put(sessionId, proxy);
 
                 Packet welcomePacket = PacketHelpers.createWelcomePacket(clientName);
                 return welcomePacket;

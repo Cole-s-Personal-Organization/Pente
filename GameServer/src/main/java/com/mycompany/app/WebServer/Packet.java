@@ -42,8 +42,8 @@ public class Packet {
         // throw error if missing required info
         if (builder.command == null) { missingAttributes.add("command"); }
         if (builder.namespace == null) { missingAttributes.add("namespace"); }
-        if (builder.clientSessionId == null) { missingAttributes.add("clientSessionId"); }
-        if (builder.data == null) { missingAttributes.add("data"); }
+        // if (builder.clientSessionId == null) { missingAttributes.add("clientSessionId"); }
+        // if (builder.data == null) { missingAttributes.add("data"); }
         if (!missingAttributes.isEmpty()) {
             String missingAttributeString = missingAttributes.toString();
             throw new InvalidPacketConstructionException("Error: missing " + missingAttributeString + " attribute in raw message. Cannot construct Message object.");
