@@ -1,6 +1,8 @@
 # CLI Pente
 A CLI implementation of pente. 
 
+[![CI/CD for GameServer](https://github.com/Cole-s-Personal-Organization/Pente/actions/workflows/Gameserver.yaml/badge.svg)](https://github.com/Cole-s-Personal-Organization/Pente/actions/workflows/Gameserver.yaml)
+
 [Wikipedia Link](https://en.wikipedia.org/wiki/Pente)
 
 ## Game Rules
