@@ -38,17 +38,25 @@ jobs:
       working-directory: ./GameServer
       run: mvn --batch-mode --update-snapshots verify
 
+    - name: Create Staging Directory
+      run: |
+        mkdir ./staging/
+        mkdir ./staging/build/
+        mkdir ./staging/docs/
+    
+    - name: Copy Generated JAR files to Staging
+      run: cp ./GameServer/target/*.jar ./staging/build/
+
     - name: Create Autodocs with Javadoc
       working-directory: ./GameServer
       run: mvn javadoc:javadoc
-
-    - name: Copy Generated artifacts to staging directory
-      run: |
-        mkdir staging
-        cp ./GameServer/target/*.jar staging/
-        mv ./GameServer/target/site/apidocs Gameserver/docs/
-        rm -rf ./GameServer/target/
     
+    - name: Move Apidocs to Staging Docs
+      run: mv ./GameServer/target/site/apidocs/* ./staging/docs/
+
+    - name: Clean up Target Directory
+      run: rm -rf ./GameServer/target/
+
 
   # deploy:
   #   runs-on: ubuntu-latest
