@@ -1,0 +1,64 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+name: CI/CD for GameServer
+
+on:
+  push:
+    branches: [ "main", "cole_branch" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: "us-west-2"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Run the Maven verify phase
+      working-directory: Gameserver/
+      run: mvn --batch-mode --update-snapshots verify
+
+    - name: Create Autodocs with Javadoc
+      working-directory: Gameserver/
+      run: mvn javadoc:javadoc
+
+    - name: Copy Generated artifacts to staging directory
+      run: |
+        mkdir staging
+        cp Gameserver/target/*.jar staging/
+        mv Gameserver/target/site/apidocs Gameserver/docs/
+        rm -rf Gameserver/target/
+    
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::907916346408:role/ColeOrgGithubActionsRole
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Copy staging artifacts to s3 
+      run: aws s3 sync staging s3://coles-game-server-bucket

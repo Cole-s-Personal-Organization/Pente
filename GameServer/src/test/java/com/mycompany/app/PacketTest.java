@@ -125,7 +125,7 @@ public class PacketTest {
 
         Packet packet = builder.build();
 
-        String expectedToString = "Message: {\n/game/score\n" + "data: " + data.toString() + "\n}";
+        String expectedToString = "Packet: {\n/game/score\n" + "data: " + data.toString() + "\n}";
         assertEquals(expectedToString, packet.toPrettyPrintString());
     }
 
