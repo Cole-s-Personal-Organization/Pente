@@ -38,11 +38,19 @@ jobs:
       working-directory: ./GameServer
       run: mvn --batch-mode --update-snapshots verify
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
     - name: Create Staging Directory
       run: |
         mkdir ./staging/
         mkdir ./staging/build/
         mkdir ./staging/docs/
+
+    - name: Build JAR files
+      run: mvn package
     
     - name: Copy Generated JAR files to Staging
       run: cp ./GameServer/target/*.jar ./staging/build/
@@ -58,19 +66,14 @@ jobs:
       run: rm -rf ./GameServer/target/
 
 
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v3
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::907916346408:role/ColeOrgGithubActionsRole
+        aws-region: ${{ env.AWS_REGION }}
 
-  #   - name: Configure AWS credentials
-  #     uses: aws-actions/configure-aws-credentials@v4
-  #     with:
-  #       role-to-assume: arn:aws:iam::907916346408:role/ColeOrgGithubActionsRole
-  #       aws-region: ${{ env.AWS_REGION }}
-
-  #   - name: Copy staging artifacts to s3 
-  #     run: aws s3 sync staging s3://coles-game-server-bucket
+    - name: Copy staging artifacts to s3 
+      run: aws s3 sync staging s3://coles-game-server-bucket
