@@ -1,5 +1,6 @@
 // WelcomePage.tsx
 
+import { Button } from '@/components/ui/button';
 import React, { useState } from 'react';
 
 interface WelcomePageProps {
@@ -23,39 +24,13 @@ const WelcomePage: React.FC<WelcomePageProps> = ({isConnectedToServer, setIsConn
   };
 
   return (
-    <div >
-      <div >Welcome to the Gameserver!</div>
-      <button
-        onClick={handleConnectClick}
-        disabled={connecting}
-      >
+    <div id='welcome-page'>
+      <h1 className='text-3xl font-bold'>Game Server</h1>
+      <Button onClick={handleConnectClick} disabled={connecting}>
         {connecting ? 'Connecting...' : 'Connect'}
-      </button>
+      </Button>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centeredText: {
-    fontSize: '24px',
-    marginBottom: '20px',
-  },
-  connectButton: {
-    fontSize: '18px',
-    padding: '10px',
-    cursor: 'pointer',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-  },
 };
 
 export default WelcomePage;

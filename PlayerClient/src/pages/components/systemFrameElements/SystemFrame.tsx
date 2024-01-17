@@ -1,7 +1,7 @@
 
 
 import React from 'react'
-import FrameHeader from './FrameHeader'
+import FrameHeader from '../FrameHeader'
 import TimeDisplayComponent from './TimeDisplayComponent'
 import NetworkMetricsComponent from './NetworkMetricsComponent'
 
@@ -11,7 +11,7 @@ interface SystemFrameProps {
 
 const SystemFrame: React.FC<SystemFrameProps> = ({ sessionStartTime }) => {
   return (
-    <div>
+    <div className='frame'>
       <FrameHeader frameName='System'/>
 
       <TimeDisplayComponent

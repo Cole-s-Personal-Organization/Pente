@@ -1,9 +1,11 @@
 
 
 import React from 'react'
-import NetworkMetricsComponent from '../components/NetworkMetricsComponent'
-import TimeDisplayComponent from '../components/TimeDisplayComponent'
-import SystemFrame from '../components/SystemFrame'
+import NetworkMetricsComponent from './components/systemFrameElements/NetworkMetricsComponent'
+import TimeDisplayComponent from './components/systemFrameElements/TimeDisplayComponent'
+import SystemFrame from './components/systemFrameElements/SystemFrame'
+import ChatAndCommandFrame from './components/chatAndCommandFrameElements/ChatAndCommandFrame'
+import { ResizablePanelGroup } from '@/components/ui/resizable'
 
 interface MainPageProps {
   sessionStartTime: Date
@@ -12,9 +14,10 @@ interface MainPageProps {
 const MainPage: React.FC<MainPageProps> = ({ sessionStartTime }) => {
 
   return (
-    <div>MainPage
+    <div className='page'>
       
       <SystemFrame sessionStartTime={sessionStartTime}/>
+      <ChatAndCommandFrame/>
     </div>
   )
 }

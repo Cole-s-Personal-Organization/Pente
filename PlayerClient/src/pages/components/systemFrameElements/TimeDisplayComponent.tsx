@@ -26,7 +26,7 @@ const TimeDisplayComponent: React.FC<TimeDisplayComponentProps> = ({ connectionS
       
       const timeDelta = calculateTimeDelta(connectionStartTime, currentTime);
       setCurrentTimeDeltaSinceStartSeconds(timeDelta);
-    }, 1000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -39,9 +39,9 @@ const TimeDisplayComponent: React.FC<TimeDisplayComponentProps> = ({ connectionS
   return (
     <div>
       <h2>Time Display</h2>
-      <p>Date: { currentTime.getMonth() }/{ currentTime.getDate() }/{ currentTime.getFullYear() }</p>
+      <p>Date: { currentTime.getMonth() + 1 }/{ currentTime.getDate() }/{ currentTime.getFullYear() }</p>
       <p>Current Time: {formatTime(currentTime)}</p>
-      <p>Time Since Connection: {timeDeltaSinceStartSeconds} seconds</p>
+      <p>Time Since Connection Delta: { Math.floor(timeDeltaSinceStartSeconds / 60) } minutes</p>
     </div>
   );
 };
