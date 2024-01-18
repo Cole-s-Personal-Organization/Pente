@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.websocket.*;
 
+import com.mycompany.app.WebServer.AbstractNamespace;
+
 public class MyWebSocketServerEndpoint extends Endpoint {
 
     // Collection to store active sessions
@@ -30,5 +32,21 @@ public class MyWebSocketServerEndpoint extends Endpoint {
     @Override
     public void onClose(Session session, CloseReason closeReason) {
         System.out.println("WebSocket connection closed: " + session.getId());
+    }
+
+    // private void joinLobby(Session session, String )
+
+    private void broadcastMessageToNamespace(Session sender, AbstractNamespace namespace, String message) {
+
+    }
+
+    /**
+     * 
+     * @param session
+     * @param namespace The namespace in which the message is being sent from
+     * @param message
+     */
+    private void sendMessage(Session session, AbstractNamespace namespace, String message) {
+
     }
 }

@@ -33,19 +33,23 @@ A webserver which provides an interface for users to play Pente.
 1. *src/test/java/com/mycompany/app/* - Houses all testing for the webserver.
 
 # Important Commands
-This project will be utilizing a maven build system, standard maven commands will be applicable here.
+This project's java backend will be packaged into a docker container and served by Apache Tomcat. A Maven build system will be used here, so all standard maven commands can be used here.
 
-- Build Commands
-    - Build the project:
+- Build Command
+    - Build the project outside dockerfile:
 
             mvn package
+    
+    - Build the Dockerfile
+
+            docker build -t <image-name> .
 
 - Run Commands
-    - Run the JAR file:
+    
+    - Run the docker image:
 
-            java -cp target/GameServer-1.0-SNAPSHOT.jar com.mycompany.app.App
+            docker run -p 8080:8080 <image-name>
 
 - Run Tests
     
         mvn test
-

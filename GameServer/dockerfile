@@ -1,0 +1,15 @@
+
+# Stage 1: Build stage
+FROM maven:3.8.4-openjdk-11 AS build
+WORKDIR /app
+COPY pom.xml .
+COPY ./src ./src
+RUN mvn clean package
+
+# Stage 2: Tomcat runtime stage
+FROM tomcat:latest
+WORKDIR /usr/local/tomcat/webapps
+RUN rm -rf ROOT
+COPY --from=build /app/target/GameServer-1.0-SNAPSHOT.war /usr/local/tomcat/webapps/ROOT.war
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
