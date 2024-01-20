@@ -1,0 +1,29 @@
+package com.mycompany.app;
+
+import java.io.IOException;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/helloservlet")
+public class HelloServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        
+        ServletOutputStream out = resp.getOutputStream();
+        out.println("This is a Jakarta EE 9 Servlet!");
+        out.println();
+        out.println("this.getServletContext().getServerInfo() = " + this.getServletContext().getServerInfo());
+        out.println("this.getClass().getSuperclass() = " + this.getClass().getSuperclass());
+        out.println("System.getProperty(\"java.version\") = " + System.getProperty("java.version"));
+        out.println("System.getProperty(\"java.runtime.version\") = " + System.getProperty("java.runtime.version"));
+        out.println("System.getProperty(\"java.vendor\") = " + System.getProperty("java.vendor"));
+    }
+
+}
