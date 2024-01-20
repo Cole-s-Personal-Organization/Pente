@@ -1,8 +1,11 @@
 package com.mycompany.app.WebServer.Endpoints;
 
 import java.io.*;
-import javax.websocket.*;
 
+import jakarta.websocket.server.ServerEndpoint;
+import jakarta.websocket.*;
+
+@ServerEndpoint(value="/ping")
 public class PingEndpoint extends Endpoint {
     private Session session;
 

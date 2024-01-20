@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  gameserver-backend:
+    build:
+      context: ./GameServer
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"

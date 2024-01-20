@@ -7,6 +7,11 @@ public class Message {
     private String content;
 
     
+    
+    public Message() {
+    }
+
+
     public Message(String from, String to, String context, String content) {
         this.from = from;
         this.to = to;
