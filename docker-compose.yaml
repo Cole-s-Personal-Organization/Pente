@@ -7,3 +7,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+  
+  client-frontend:
+    build:
+      context: ./PlayerClient
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - gameserver-backend

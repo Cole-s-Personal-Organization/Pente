@@ -18,7 +18,8 @@
     "react-dom": "^18.2.0",
     "react-resizable-panels": "^1.0.9",
     "tailwind-merge": "^2.2.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "websocket": "^1.0.34"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",

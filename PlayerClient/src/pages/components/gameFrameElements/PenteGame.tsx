@@ -3,7 +3,7 @@
 import React from 'react'
 
 
-const PenteGame = () => {
+const PenteGame: React.FC = () => {
   /*
 
 

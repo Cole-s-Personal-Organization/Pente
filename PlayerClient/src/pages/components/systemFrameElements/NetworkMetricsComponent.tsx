@@ -7,7 +7,7 @@ import React, {useState, useEffect} from 'react'
  * @returns Network status 
  */
 
-const NetworkMetricsComponent = () => {
+const NetworkMetricsComponent: React.FC = () => {
   const [latency, setLatency] = useState(0);
   const [packetLoss, setPacketLoss] = useState(0);
   // Add more state variables for other metrics

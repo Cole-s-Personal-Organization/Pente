@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-const GameLobbies = () => {
+const GameLobbies: React.FC = () => {
   return (
     <div>GameLobbies</div>
   )

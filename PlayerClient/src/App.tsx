@@ -7,8 +7,6 @@ function App() {
   const [isConnectedToServer, setIsConnectedToServer] = useState<boolean>(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
 
-  const socketConnection = new WebSocket('ws://localhost:8080');
-
 
   useEffect(() => {
     setSessionStartTime(new Date());
@@ -21,7 +19,6 @@ function App() {
             sessionStartTime={sessionStartTime}
           />
         : <WelcomePage
-            isConnectedToServer={isConnectedToServer}
             setIsConnectedToServer={setIsConnectedToServer}
           />}
     </>
