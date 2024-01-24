@@ -1,11 +1,58 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useState, useEffect } from 'react';
 
-const ChatAndCommandFrame: React.FC = () => {
-  const chatEndpoint = 'ws://localhost:8080/chatEndpoint/test';
-  const clientWebsocket = new WebSocket(chatEndpoint);
+interface ChatAndCommandFrameProps {
+  username: string
+}
+
+const ChatAndCommandFrame: React.FC<ChatAndCommandFrameProps> = ({ username }) => {
+  const chatEndpoint = 'ws://localhost:8080/game/chatEndpoint/';
 
   const [inputText, setInputText] = useState('');
   const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
+
+
+  useEffect(() => {
+    console.log("username: " + username);
+    
+    const socket = new WebSocket(chatEndpoint + username);
+
+    
+
+    socket.onopen = () => {
+      console.log('WebSocket connection opened');
+      console.log('Endpoint' + chatEndpoint + username);
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      console.log('Received message:', message);
+
+      if (inputText.trim() !== '') {
+        setChatMessages([...chatMessages, inputText]);
+        setInputText('');
+  
+        sendMessage(inputText);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    setWebSocket(socket);
+
+    // Clean up the WebSocket connection when the component unmounts
+    return () => {
+      if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+        webSocket.close();
+      }
+    };
+  }, [username]);
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value);
@@ -16,25 +63,23 @@ const ChatAndCommandFrame: React.FC = () => {
       setChatMessages([...chatMessages, inputText]);
       setInputText('');
 
-      sendChatMessage(inputText)
-        .then(() => { console.log("Successfully Sent Message!") })
-        .catch((err) => { console.log("Error Sending Message" + err) })
+      sendMessage(inputText);
     }
   };
 
-  clientWebsocket.onopen = () => {
-    console.log("Opening Chat Endpoint");
-    
-  }
 
-  async function sendChatMessage(chat: string) {
-    const jsonMessage = {
-      "username": "test",
-      "context": '/',
-      "content": chat
+  const sendMessage = (content: string) => {
+    const message = {
+      from: username,
+      content,
+    };
+
+    if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+      webSocket.send(JSON.stringify(message));
+    } else {
+      console.error('WebSocket connection not open.');
     }
-    await clientWebsocket.send(JSON.stringify(jsonMessage))
-  }
+  };
 
   return (
     <div>

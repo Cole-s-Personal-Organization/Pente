@@ -17,7 +17,7 @@ const MainPage: React.FC<MainPageProps> = ({ sessionStartTime }) => {
     <div className='page'>
       
       <SystemFrame sessionStartTime={sessionStartTime}/>
-      <ChatAndCommandFrame/>
+      <ChatAndCommandFrame username='test'/>
     </div>
   )
 }

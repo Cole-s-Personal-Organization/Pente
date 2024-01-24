@@ -12,12 +12,8 @@ const WelcomePage: React.FC<WelcomePageProps> = ({setIsConnectedToServer}) => {
 
   const handleConnectClick = () => {
     setConnecting(true);
-
-    // Simulating socket connection (replace with your actual socket logic)
+    
     setTimeout(() => {
-      // Once connected, you can navigate to a different page or perform other actions
-      // For now, just log a message
-      console.log('Socket connected! Move to the next page...');
       setIsConnectedToServer(true);
     }, 1000);
   };
