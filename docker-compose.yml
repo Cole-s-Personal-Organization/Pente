@@ -6,7 +6,7 @@ services:
     ports:
       - "6379:6379"
 
-  gameserver-backend:
+  gameserver:
     build:
       context: ./GameServer
       dockerfile: Dockerfile

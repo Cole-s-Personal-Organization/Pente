@@ -85,6 +85,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
             while ((line = reader.readLine()) != null) {
                 requestBody.append(line);
             }
+            System.out.println("Post Data: " + requestBody.toString());
 
             // Process the data
             String postData = requestBody.toString();
@@ -108,11 +109,10 @@ public class PenteGameEndpointHandler extends HttpServlet {
      */
     private String handleGetListGameHeaders()  {
         try (Jedis jedisInst = new Jedis("localhost", 6379)) {
-            jedisInst.get("")
+            jedisInst.get("");
         } catch (Exception e) {
-            // TODO: handle exception
             System.out.println("error");
-            return;
+            return "";
         }
         try {
             // Create a sample Java object

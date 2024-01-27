@@ -21,12 +21,22 @@
   </properties>
 
   <dependencies>
+    <!-- testing -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.19.4</version>
+      <scope>test</scope>
+    </dependency>
+
+    
+
     <!-- Json -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -58,6 +68,52 @@
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
+        
+
+        
+        <!-- maven-failsafe-plugin, runs the integration-test phase, addes test classes to classpath -->
+        <!-- <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>integration-test</id>
+                    <goals>
+                        <goal>integration-test</goal>
+                    </goals>
+                    <configuration>
+                        <includes>
+                            <include>**/*IT.java</include>
+                        </includes>
+                        <systemPropertyVariables>
+                            <it.server.port>${docker.http.port}</it.server.port> 
+                        </systemPropertyVariables>
+                        <additionalClasspathElements>
+        <additionalClasspathElement>${basedir}/target/classes</additionalClasspathElement>
+                        </additionalClasspathElements>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin> -->
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.0.0-M5</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+
+
+
+
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
