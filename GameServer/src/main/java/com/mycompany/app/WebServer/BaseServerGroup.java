@@ -3,7 +3,7 @@ package com.mycompany.app.WebServer;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mycompany.app.Game.Pente.PenteGameController;
+import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.WebServer.Packet.PacketBuilder;
 
 import java.net.*;

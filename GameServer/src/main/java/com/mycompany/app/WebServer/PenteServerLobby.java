@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import com.mycompany.app.Game.Pente.PenteGameController;
+import com.mycompany.app.Game.Pente.PenteGameModel;
 
 
 /**
@@ -15,11 +15,11 @@ import com.mycompany.app.Game.Pente.PenteGameController;
  */
 public class PenteServerLobby extends AbstractNamespace {
     
-    PenteGameController controller;
+    PenteGameModel controller;
 
     public PenteServerLobby(UUID namespaceId, String name, AbstractNamespace parentNamespace) {
         super(namespaceId, name, parentNamespace);
-        this.controller = new PenteGameController();
+        this.controller = new PenteGameModel();
     }
 
     @Override

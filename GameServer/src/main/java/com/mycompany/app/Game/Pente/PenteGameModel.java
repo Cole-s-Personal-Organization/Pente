@@ -1,5 +1,6 @@
 package com.mycompany.app.Game.Pente;
 import java.util.HashMap;
+import java.util.UUID;
 
 import com.mycompany.app.WebServer.Packet;
 
@@ -10,17 +11,17 @@ import com.mycompany.app.WebServer.Packet;
  * @author Dan
  * @version 1.0.0
  */
-public class PenteGameController {
+public class PenteGameModel {
     private PenteGameSettings gameSettings;
-    private PenteGameBoardModel model;
+    private PenteGameBoardModel board;
 
     private int[] playerCaptures;
 
-    public PenteGameController() {
+    public PenteGameModel() {
         this.gameSettings = new PenteGameSettings.PenteGameSettingsBuilder().setToDefaultValues().build();
     }
 
-    public PenteGameController(
+    public PenteGameModel(
         PenteGameSettings settings,
         PenteGameBoardModel model
     ) {
@@ -29,13 +30,13 @@ public class PenteGameController {
         } else {
             this.gameSettings = new PenteGameSettings.PenteGameSettingsBuilder().setToDefaultValues().build();
         }
-        this.model = model;
+        this.board = model;
 
         this.playerCaptures = new int[2];
     }
 
     void start() {
-        this.model = new PenteGameBoardModel();
+        this.board = new PenteGameBoardModel();
     }
 
     
