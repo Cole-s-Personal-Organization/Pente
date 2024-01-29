@@ -1,5 +1,6 @@
 package com.mycompany.app.WebServer;
 
+import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,5 +44,9 @@ public class RedisBackedCache {
             System.out.println("Invalid read occured.");
         }
         return null;
+    }
+
+    public void hset(String hashName, String field, String value) {
+        this.jedis.hset(hashName, field, value);
     }
 }
