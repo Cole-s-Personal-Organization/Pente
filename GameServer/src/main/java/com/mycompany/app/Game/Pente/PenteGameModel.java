@@ -39,6 +39,18 @@ public class PenteGameModel {
         this.board = new PenteGameBoardModel();
     }
 
+    public PenteGameBoardModel getBoard() {
+        return board;
+    }
+
+    public PenteGameSettings getGameSettings() {
+        return gameSettings;
+    }
+
+    public int[] getPlayerCaptures() {
+        return playerCaptures;
+    }
+
     
     // public void takePlayerTurn(PenteTurn turn) {
     //     model.setMove(turn);
@@ -56,4 +68,6 @@ public class PenteGameModel {
     // private boolean checkCaptureWinCon(PenteTurn turn) {
     //     return (playerCaptures[turn.playerNumber] >= this.gameSettings.capturesToWin);
     // }
+
+
 }

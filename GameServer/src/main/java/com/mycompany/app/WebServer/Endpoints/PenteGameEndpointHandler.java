@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -92,9 +93,10 @@ public class PenteGameEndpointHandler extends HttpServlet {
         postJoinGame
     }
     
-    public RedisBackedCache cache;
+    public Jedis cache;
+    public ObjectMapper mapper = new ObjectMapper();
 
-    public PenteGameEndpointHandler(RedisBackedCache cache) {
+    public PenteGameEndpointHandler(Jedis cache) {
         this.cache = cache;
     }
 
@@ -133,27 +135,32 @@ public class PenteGameEndpointHandler extends HttpServlet {
 
     /**
      * list of all current game's header info
+     * redis data shape:
+     *      penteGame:<gameId>:header
      * e.g. GET gameserver/pente-game/list/head
      * @return json string of listed game headers 
      */
     private String handleGetListGameHeaders()  {
         
+        String key = "penteGame:gameSet";
+        Set<String> penteGameHeaderStrs = cache.smembers(key);
 
-        try (Jedis jedisInst = new Jedis("localhost", 6379)) {
-            jedisInst.get("");
-        } catch (Exception e) {
-            System.out.println("error");
-            return "";
-        }
+        ArrayList<Map<String, String>> gameHeaders = new ArrayList<>();
+
         try {
-            // Create a sample Java object
-            PenteTurn sampleObject = new PenteTurn.PenteTurnBuilder(0, 25, PenteBoardIdentifierEnum.PLAYER1).build();
-
-            // Convert the Java object to JSON
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonString = objectMapper.writeValueAsString(sampleObject);
-            return jsonString;
-        } catch (JsonProcessingException e) {
+            for (String penteGameHeaderStr : penteGameHeaderStrs) {
+                Map<String, String> deserializedHeader = new HashMap<String, String>();
+                JsonNode jsonHeader = this.mapper.readTree(penteGameHeaderStr);
+    
+                deserializedHeader.put("gameId", jsonHeader.get("gameId").asText());
+                deserializedHeader.put("lobbyName", jsonHeader.get("lobbyName").asText());
+                deserializedHeader.put("timeCreatedAt", jsonHeader.get("timeCreatedAt").asText());
+                deserializedHeader.put("gameState", jsonHeader.get("gameState").asText());
+    
+                gameHeaders.add(deserializedHeader);
+            }
+            return "";
+        } catch (IOException e) {
             return buildInternalServerProcessingError(); 
         }
     }
