@@ -16,7 +16,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.mycompany.app.Game.Pente.PenteBoardIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteGameModel;
+import com.mycompany.app.Game.Pente.PenteGameSettings;
 import com.mycompany.app.Game.Pente.PenteTurn;
 import com.mycompany.app.WebServer.UuidValidator;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
@@ -110,7 +112,7 @@ public class RedisPenteGameStore {
             jedis.hset(SPECIFIED_GAME_PREFIX, "playerCaptures", serializedPlayerCaptures);
 
             // insert board state
-            String serializedBoardState = mapper.writeValueAsString(game.getBoard());
+            String serializedBoardState = mapper.writeValueAsString(game.getGameBoard());
             jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedBoardState);
 
         } catch (Exception e) {
@@ -150,11 +152,10 @@ public class RedisPenteGameStore {
             jedis.hset(SPECIFIED_GAME_PREFIX, "players", serializedPlayerList);
 
             // add player captures counter 
-            ArrayList<Integer> playerCaptures = getPlayerCaptures(jedis, gameId);
-            playerCaptures.add(0);
-
-            String serializedPlayerCaptures = mapper.writeValueAsString(playerCaptures);
-            jedis.hset(SPECIFIED_GAME_PREFIX, "playerCaptures", serializedPlayerCaptures);
+            // ArrayList<Integer> playerCaptures = getPlayerCaptures(jedis, gameId);
+            // playerCaptures.add(0);
+            // String serializedPlayerCaptures = mapper.writeValueAsString(playerCaptures);
+            // jedis.hset(SPECIFIED_GAME_PREFIX, "playerCaptures", serializedPlayerCaptures);
 
         } catch (JsonProcessingException e) {
             // TODO: handle exception
@@ -177,6 +178,23 @@ public class RedisPenteGameStore {
         } catch (JsonProcessingException e) {
             // TODO: handle exception
         }
+    }
+
+    public static PenteGameSettings getGameSettingsByGameId(Jedis jedis, UUID gameId) {
+        String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+
+        String serializedSettings = jedis.hget(SPECIFIED_GAME_PREFIX, "settings");
+
+        try {
+            if (serializedSettings != null) {
+                PenteGameSettings settings = mapper.readValue(serializedSettings, new TypeReference<PenteGameSettings>() {});
+                
+                return settings;
+            }
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+        return null;
     }
 
     /**
@@ -223,10 +241,64 @@ public class RedisPenteGameStore {
             // TODO: handle exception
         }
     }
+
+    public static Integer[][] getBoardStateByGameId(Jedis jedis, UUID gameId) {
+        String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+        
+        String serializedCurrBoardState = jedis.hget(SPECIFIED_GAME_PREFIX, "currentBoard");
+
+        try {
+            if (serializedCurrBoardState != null) {
+                Integer[][] boardState = mapper.readValue(serializedCurrBoardState, new TypeReference<Integer[][]>() {});
+                
+                return boardState;
+            }
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+        return null;
+    }   
+
+    public static void setMoveToBoardStateByGameId(Jedis jedis, UUID gameId, PenteTurn turn) {
+        // String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+
+        // // inflate a model object
+        // Integer[][] currBoardState = getBoardStateByGameId(jedis, gameId);
+        // PenteGameBoardModel boardModel = new PenteGameBoardModel(currBoardState);
+
+        // try {
+        //     boardModel.setMove(turn);
+
+        //     String serializedPlayerCaptures = mapper.writeValueAsString(boardModel.getGameBoard());
+        //     jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedPlayerCaptures);
+
+            
+        //     boardModel.
+        // } catch (InvalidTurnException e) {
+        //     // TODO: handle exception
+        // } catch (JsonProcessingException e) {
+
+        // }
+
+        // update board, player captures
+
+    }
+
+    public static PenteBoardIdentifierEnum getPlayerGameNum(Jedis jedis, UUID gameId, UUID playerId) {
+        // get player number via player list index 
+        ArrayList<UUID> playerIds = getPlayersInGame(jedis, gameId);
+        int playerNumberEnumIndex = playerIds.indexOf(playerId) + 1; // player number = index + 1
+
+        if (PenteBoardIdentifierEnum.values().length > playerNumberEnumIndex) {
+            return null;
+        }
+        return PenteBoardIdentifierEnum.values()[playerNumberEnumIndex];
+    }
  
 
 
-    public static void addToPenteGameLog(Jedis jedis, UUID gameId, PenteTurn turn) {
-
+    public static void addToPenteGameLog(Jedis jedis, UUID gameId, String log) {
+        
     }
+
 }

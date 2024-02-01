@@ -22,4 +22,4 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - gameserver-backend
+      - gameserver

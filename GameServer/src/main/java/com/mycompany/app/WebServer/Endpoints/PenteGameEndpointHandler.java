@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -83,6 +86,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
         getlistGameHeaders,
         getSpecificGameHeader,
         getSpecificGameBoard,
+        getConnectionToGame,
 
         // post endpoints
         postCreateGame,
@@ -95,6 +99,8 @@ public class PenteGameEndpointHandler extends HttpServlet {
     
     public Jedis cache;
     public ObjectMapper mapper = new ObjectMapper();
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public PenteGameEndpointHandler(Jedis cache) {
         this.cache = cache;
@@ -182,6 +188,26 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @return json representation of board state
      */
     private String handleGetGameStateByGameId(UUID gameId) {
+        return "";
+    }
+
+    private String handleGetGameConnection(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        resp.setContentType("text/event-stream");
+        resp.setCharacterEncoding("UTF-8");
+        resp.setHeader("Cache-Control", "no-cache");
+        resp.setHeader("Connection", "keep-alive");
+
+        try {
+            final PrintWriter writer = resp.getWriter();
+
+            // Send a dummy event every second for demonstration purposes
+            scheduler.scheduleAtFixedRate(() -> {
+                writer.write("data: {\"message\": \"This is a server-sent event.\"}\n\n");
+                writer.flush();
+            }, 0, 1, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
         return "";
     }
 
@@ -497,6 +523,10 @@ public class PenteGameEndpointHandler extends HttpServlet {
             case getlistGameHeaders: // GET gameserver/pente-game/{game-id}/board
                 jsonStringResponse = handleGetListGameHeaders();
                 break;
+
+            case getConnectionToGame: // GET gameserver/pente-game/{game-id}/sse-connection
+                jsonStringResponse = handleGetGameConnection(req, resp, UUID.randomUUID());
+                break;
         
             default:
                 break;
@@ -557,6 +587,11 @@ public class PenteGameEndpointHandler extends HttpServlet {
         
         resp.setContentType("application/json");
         resp.getWriter().write(jsonStringResponse);
+    }
+
+    @Override
+    public void destroy() {
+        scheduler.shutdown();
     }
 }
 
