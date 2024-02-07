@@ -65,7 +65,7 @@ public abstract class AbstractNamespace {
      * @param p a packet
      * @return a response packet
      */
-    public abstract Packet handlePacket(Packet p);
+    // public abstract Packet handlePacket(Packet p);
 
     /**
      * Connects the client to this namespace, handles any entrance commands associated with joining said namespace.
@@ -106,19 +106,19 @@ public abstract class AbstractNamespace {
      * @param p A packet
      * @return boolean representing if the client who sent the packet origininates from this namespace.
      */
-    protected boolean isPacketFromClientInNamespace(Packet p) {
-        UUID sessionId = p.clientSessionId;
+    // protected boolean isPacketFromClientInNamespace(Packet p) {
+    //     UUID sessionId = p.clientSessionId;
 
-        if(sessionId == null) {
-            return false;
-        } 
+    //     if(sessionId == null) {
+    //         return false;
+    //     } 
 
-        if(this.sessionIdToClientProxyMap.containsKey(sessionId)) {
-            return true;
-        }
+    //     if(this.sessionIdToClientProxyMap.containsKey(sessionId)) {
+    //         return true;
+    //     }
 
-        return false;
-    }
+    //     return false;
+    // }
 
     
     // public JsonNode[] getSessionsInNamespace() {

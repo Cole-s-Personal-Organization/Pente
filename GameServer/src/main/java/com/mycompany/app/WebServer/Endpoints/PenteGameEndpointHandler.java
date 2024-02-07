@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +26,7 @@ import com.mycompany.app.Game.Pente.PenteBoardIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.Game.Pente.PenteGameSettings;
 import com.mycompany.app.Game.Pente.PenteTurn;
+import com.mycompany.app.WebServer.EndpointHelperFunctions;
 import com.mycompany.app.WebServer.RedisBackedCache;
 import com.mycompany.app.WebServer.RedisConnectionManager;
 import com.mycompany.app.WebServer.UuidValidator;
@@ -115,63 +117,6 @@ public class PenteGameEndpointHandler extends HttpServlet {
 
 
     public PenteGameEndpointHandler() {
-    }
-
-    // private static Jedis connectJedisWithRetry() {
-    //     int retriesAttempted = 0;
-
-    //     while (retriesAttempted < MAX_RETRIES) {
-    //         try {
-    //             Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT);
-    //             System.out.println("Ping result: " + jedis.ping());
-    //             // Test the connection by sending a ping
-    //             if ("PONG".equalsIgnoreCase(jedis.ping())) {
-    //                 return jedis;
-    //             }
-    //         } catch (Exception e) {
-    //             System.err.println("Error connecting to Redis. Retrying in " + RETRY_DELAY_MS + " ms.");
-    //             // Log or handle the exception as needed
-    //         }
-
-    //         retriesAttempted++;
-    //         try {
-    //             Thread.sleep(RETRY_DELAY_MS);
-    //         } catch (InterruptedException e) {
-    //             Thread.currentThread().interrupt();
-    //         }
-    //     }
-
-    //     System.err.println("Max retries reached. Unable to connect to Redis.");
-    //     return null;
-    // }
-
-
-    /**
-     * Converts a generic incoming post request body json string into a jsonNode object.
-     * @param req request object
-     * @return a jsonified post request content object 
-     */
-    private JsonNode getPostRequestBody(HttpServletRequest req) {
-        JsonNode postDataJsonNode = null;
-        try {
-            BufferedReader reader = req.getReader();
-            StringBuilder requestBody = new StringBuilder();
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                requestBody.append(line);
-            }
-            System.out.println("Post Data: " + requestBody.toString());
-
-            // Process the data
-            String postData = requestBody.toString();
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readTree(postData);
-        } catch (IOException e) {
-            System.out.println("Warning: bad parse of request");
-        }
-        return postDataJsonNode;
     }
 
     // --------------------------------------------------------------------------------
@@ -287,7 +232,9 @@ public class PenteGameEndpointHandler extends HttpServlet {
             UUID creatorId; 
             LocalDateTime nowTime = LocalDateTime.now();
 
-            JsonNode postDataContent = this.getPostRequestBody(req);
+            System.out.println("creatorId: " + req.getParameter("creatorId"));
+        
+            JsonNode postDataContent = EndpointHelperFunctions.getPostRequestBody(req);
 
             try {
                 creatorId = UUID.fromString(postDataContent.get("creatorId").asText());
@@ -546,7 +493,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
                     return EndpointRouterResponseId.missingEndpointError;
             }
         } 
-        else if (firstPathElement == "create") {
+        else if (firstPathElement.equals("create")) {
             return EndpointRouterResponseId.postCreateGame;
         }
 
