@@ -1,48 +1,52 @@
 package com.mycompany.app.WebServer;
 
+import java.time.Duration;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 public class RedisConnectionManager {
-    private static final String REDIS_HOST = "localhost";
+    private static final String REDIS_HOST = "redis";
     private static final int REDIS_PORT = 6379;
+    private static final int MAX_RETRIES = 5;
+    private static final long RETRY_DELAY_MS = 1000; // 1 second delay between retries
 
-    private static JedisPool jedisPool;
+    private String dbURL;
+	private String user;
+	private String password;
+
+    private JedisPool jedisPool;
 
     // Private constructor to prevent instantiation
-    private RedisConnectionManager() {
+    public RedisConnectionManager(String url, String user, String password) {
+        this.dbURL = url;
+        this.user = user;
+        this.password = password;
+
+        JedisPoolConfig poolConfig = buildPoolConfig();
+        this.jedisPool = new JedisPool(poolConfig, "redis");
     }
 
-    // Lazy initialization with double-checked locking
-    private static JedisPool getJedisPool() {
-        if (jedisPool == null) {
-            synchronized (RedisConnectionManager.class) {
-                if (jedisPool == null) {
-                    JedisPoolConfig poolConfig = new JedisPoolConfig();
-                    // Configure pool settings if needed
+    private JedisPoolConfig buildPoolConfig() {
+        final JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(128);
+        poolConfig.setMaxIdle(128);
+        poolConfig.setMinIdle(16);
+        poolConfig.setTestOnBorrow(true);
+        poolConfig.setTestOnReturn(true);
+        poolConfig.setTestWhileIdle(true);
+        poolConfig.setNumTestsPerEvictionRun(3);
+        poolConfig.setBlockWhenExhausted(true);
+        return poolConfig;
+    }
 
-                    jedisPool = new JedisPool(poolConfig, REDIS_HOST, REDIS_PORT);
-                }
-            }
-        }
+    public JedisPool getJedisPool() {
         return jedisPool;
     }
 
-    // Get a Jedis instance from the pool
-    public static Jedis getJedis() {
-        return getJedisPool().getResource();
-    }
-
-    // Return Jedis instance to the pool
-    public static void returnJedis(Jedis jedis) {
-        if (jedis != null) {
-            jedis.close();
-        }
-    }
-
     // Destroy the Jedis pool when shutting down the application
-    public static void destroyPool() {
+    public void destroyPool() {
         if (jedisPool != null) {
             jedisPool.destroy();
         }
