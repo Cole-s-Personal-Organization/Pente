@@ -1,4 +1,4 @@
-package com.mycompany.app.WebServer.Endpoints;
+package com.mycompany.app.WebServer.WebServlets;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

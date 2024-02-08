@@ -17,7 +17,7 @@ To get your environment setup:
 
 At this point you should have everything you need for development.
 
-## Development Workflow
+## Git Workflow
 Everytime you want to work on this project you should follow these steps to setup your environment.
 1. Navigate to GameServer folder.
 

@@ -1,13 +1,14 @@
 package com.mycompany.app;
 
 import org.junit.Test;
+
+import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler;
+import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler.EndpointRouterResponseId;
+
 import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-
-import com.mycompany.app.WebServer.Endpoints.PenteGameEndpointHandler;
-import com.mycompany.app.WebServer.Endpoints.PenteGameEndpointHandler.EndpointRouterResponseId;
 
 public class PenteGameEndpointTest {
     // ----------------------------------------------------------------------------------------------------------------------------

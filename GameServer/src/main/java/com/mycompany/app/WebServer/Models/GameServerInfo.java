@@ -6,9 +6,13 @@ import java.util.UUID;
 
 /**
  * Contains abstract information about an induvidual game as it relates to the server
+ * @author Cole
  */
 public class GameServerInfo {
 
+    /**
+     * An enum used to describe the current state of a game
+     */
     public enum GameRunState {
         Created, Running, Ended
     }
