@@ -13,7 +13,7 @@ public class PenteBoardGameModelTest {
     
     @Test
     public void constructDefaultGameBoard() {
-        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteGameModel model = new PenteGameModel();
         assertNotNull(model);
 
         // ensure that all positions are set to "EMPTY"
@@ -26,7 +26,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void basicSetMove() {
-        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteGameModel model = new PenteGameModel();
         
         // move at 5,5
         int posX = 5;
@@ -44,7 +44,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void cornerSetMove() {
-        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteGameModel model = new PenteGameModel();
 
         // move at 0, 0
         int posXFirst = 0;
@@ -70,7 +70,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void illegalOnTopOfAnotherSetMove() {
-        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteGameModel model = new PenteGameModel();
         boolean thrown = false;
 
         // move at 5,5
@@ -88,7 +88,7 @@ public class PenteBoardGameModelTest {
         try {
             model.setMove(firstTurn);
             model.setMove(secondTurn);
-        } catch (PenteGameBoardModel.InvalidTurnException e) {
+        } catch (PenteGameModel.InvalidTurnException e) {
             thrown = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,7 +98,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void illegalOutOfBoundsSetMove() {
-        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteGameModel model = new PenteGameModel();
         boolean thrown = false;
 
         // move at 5,5
@@ -109,7 +109,7 @@ public class PenteBoardGameModelTest {
 
         try {
             model.setMove(turn);
-        } catch (PenteGameBoardModel.InvalidTurnException e) {
+        } catch (PenteGameModel.InvalidTurnException e) {
             thrown = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -119,7 +119,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void illegalSetToEmptySetMove() {
-        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteGameModel model = new PenteGameModel();
         boolean thrown = false;
 
         // move at 5,5
@@ -130,7 +130,7 @@ public class PenteBoardGameModelTest {
 
         try {
             model.setMove(turn);
-        } catch (PenteGameBoardModel.InvalidTurnException e) {
+        } catch (PenteGameModel.InvalidTurnException e) {
             thrown = true;
         } catch (Exception e) {
             e.printStackTrace();

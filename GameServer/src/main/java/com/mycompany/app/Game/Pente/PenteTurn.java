@@ -1,11 +1,18 @@
 
 package com.mycompany.app.Game.Pente;
 
+
+/**
+ * A representation of Pente game turn.
+ * 
+ * @author Dan, Cole
+ * @version 1.0.0
+ */
 public class PenteTurn {
     // required
-    public final int posX;
-    public final int posY;
-    public final PenteBoardIdentifierEnum playerNumber;
+    private final int posX;
+    private final int posY;
+    private final PenteBoardIdentifierEnum playerNumber;
 
     // optional
     public final Boolean isTurnOneAction;
@@ -18,6 +25,28 @@ public class PenteTurn {
 
     }
 
+    public int getPosX() {
+        return posX;
+    }
+
+    public int getPosY() {
+        return posY;
+    }
+
+    public PenteBoardIdentifierEnum getPlayerNumber() {
+        return playerNumber;
+    }
+
+    public Boolean getIsTurnOneAction() {
+        return isTurnOneAction;
+    }
+
+    /**
+     * A builder object which supports the building of a pente game turn object.
+     * 
+     * @author Dan, Cole
+     * @version 1.0.0
+     */
     public static class PenteTurnBuilder {
         // required
         private int posX;

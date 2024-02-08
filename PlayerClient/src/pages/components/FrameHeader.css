@@ -1,0 +1,10 @@
+.frame-header {
+    display: flex;
+    flex-direction: row;
+    border-radius: 2px;
+    border-color: var(--black);
+}
+
+.frame-header-name {
+    padding-left: auto;
+}
