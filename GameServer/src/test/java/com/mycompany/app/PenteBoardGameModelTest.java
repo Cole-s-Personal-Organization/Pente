@@ -13,7 +13,7 @@ public class PenteBoardGameModelTest {
     
     @Test
     public void constructDefaultGameBoard() {
-        PenteGameModel model = new PenteGameModel();
+        PenteGameBoardModel model = new PenteGameBoardModel();
         assertNotNull(model);
 
         // ensure that all positions are set to "EMPTY"
@@ -26,7 +26,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void basicSetMove() {
-        PenteGameModel model = new PenteGameModel();
+        PenteGameBoardModel model = new PenteGameBoardModel();
         
         // move at 5,5
         int posX = 5;
@@ -44,7 +44,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void cornerSetMove() {
-        PenteGameModel model = new PenteGameModel();
+        PenteGameBoardModel model = new PenteGameBoardModel();
 
         // move at 0, 0
         int posXFirst = 0;
@@ -70,7 +70,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void illegalOnTopOfAnotherSetMove() {
-        PenteGameModel model = new PenteGameModel();
+        PenteGameBoardModel model = new PenteGameBoardModel();
         boolean thrown = false;
 
         // move at 5,5
@@ -88,7 +88,7 @@ public class PenteBoardGameModelTest {
         try {
             model.setMove(firstTurn);
             model.setMove(secondTurn);
-        } catch (PenteGameModel.InvalidTurnException e) {
+        } catch (PenteGameBoardModel.InvalidTurnException e) {
             thrown = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,7 +98,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void illegalOutOfBoundsSetMove() {
-        PenteGameModel model = new PenteGameModel();
+        PenteGameBoardModel model = new PenteGameBoardModel();
         boolean thrown = false;
 
         // move at 5,5
@@ -109,7 +109,7 @@ public class PenteBoardGameModelTest {
 
         try {
             model.setMove(turn);
-        } catch (PenteGameModel.InvalidTurnException e) {
+        } catch (PenteGameBoardModel.InvalidTurnException e) {
             thrown = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -119,7 +119,7 @@ public class PenteBoardGameModelTest {
 
     @Test
     public void illegalSetToEmptySetMove() {
-        PenteGameModel model = new PenteGameModel();
+        PenteGameBoardModel model = new PenteGameBoardModel();
         boolean thrown = false;
 
         // move at 5,5
@@ -130,11 +130,84 @@ public class PenteBoardGameModelTest {
 
         try {
             model.setMove(turn);
-        } catch (PenteGameModel.InvalidTurnException e) {
+        } catch (PenteGameBoardModel.InvalidTurnException e) {
             thrown = true;
         } catch (Exception e) {
             e.printStackTrace();
         }
         assertTrue(thrown);
+    }
+
+    @Test
+    public void incompleteNInARow() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(9, 9, playerNum).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(9, 8, playerNum).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(9, 7, playerNum).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(9, 6, playerNum).build();
+        int n = 5;
+        boolean fiveInARow;
+        boolean expectedValue = false;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            fiveInARow = model.checkNInARow(turn4, n);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(fiveInARow, expectedValue);
+    }
+
+    @Test
+    public void completeNInARow() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(9, 9, playerNum).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(9, 8, playerNum).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(9, 7, playerNum).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(9, 5, playerNum).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(9, 6, playerNum).build();
+        int n = 5;
+        boolean fiveInARow;
+        boolean expectedValue = true;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            fiveInARow = model.checkNInARow(turn5, n);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(fiveInARow, expectedValue);
+    }
+
+    @Test
+    public void cornerNInARow() {
+        PenteGameBoardModel model = new PenteGameBoardModel();
+        PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(4, 4, playerNum).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(3, 3, playerNum).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(2, 2, playerNum).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(1, 1, playerNum).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(0, 0, playerNum).build();
+        int n = 5;
+        boolean fiveInARow;
+        boolean expectedValue = true;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            fiveInARow = model.checkNInARow(turn5, n);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(fiveInARow, expectedValue);
     }
 }
