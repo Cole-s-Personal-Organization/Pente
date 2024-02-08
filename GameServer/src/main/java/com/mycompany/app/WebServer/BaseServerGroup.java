@@ -3,8 +3,7 @@ package com.mycompany.app.WebServer;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mycompany.app.Game.Pente.PenteGameController;
-import com.mycompany.app.WebServer.Packet.PacketBuilder;
+import com.mycompany.app.Game.Pente.PenteGameModel;
 
 import java.net.*;
 import java.io.*;
@@ -59,44 +58,44 @@ public class BaseServerGroup extends AbstractNamespace {
      * Overridden method to handle a packet created by a client within the namespace according to the base server group's command list.
      * @param p A packet.
      */
-    @Override
-    public Packet handlePacket(Packet p) {
-        Packet responsePacket = null;
+    // @Override
+    // public Packet handlePacket(Packet p) {
+    //     Packet responsePacket = null;
 
-        System.out.println("Start packet handling process");
+    //     System.out.println("Start packet handling process");
 
-        // filter packets that aren't allowed to comunicate with this namespace due to bad internal clientSessionId
-        if(!isPacketFromClientInNamespace(p)) {
-            return PacketHelpers.createErrorPacket(p, "Packet sent to namespace user wasn't a part of.");
-        }
+    //     // filter packets that aren't allowed to comunicate with this namespace due to bad internal clientSessionId
+    //     if(!isPacketFromClientInNamespace(p)) {
+    //         // return PacketHelpers.createErrorPacket(p, "Packet sent to namespace user wasn't a part of.");
+    //     }
 
-        System.out.println("packet verified a part of namespace.");
+    //     System.out.println("packet verified a part of namespace.");
 
-        switch (p.command) {
+    //     switch (p.command) {
 
-            case "create pente lobby":
-                System.out.println("creating pente lobby");
-                UUID lobbyNamespaceId = this.rollNewChildNamespaceId();
-                String lobbyName = p.data.get("lobbyName").asText();
+    //         case "create pente lobby":
+    //             System.out.println("creating pente lobby");
+    //             UUID lobbyNamespaceId = this.rollNewChildNamespaceId();
+    //             String lobbyName = p.data.get("lobbyName").asText();
 
-                PenteServerLobby lobby = new PenteServerLobby(lobbyNamespaceId, lobbyName, parentNamespace);
-                // game creator credentials
-                UUID clientSessionId = p.clientSessionId;
-                ClientProxy clientProxy = this.sessionIdToClientProxyMap.get(clientSessionId);
+    //             PenteServerLobby lobby = new PenteServerLobby(lobbyNamespaceId, lobbyName, parentNamespace);
+    //             // game creator credentials
+    //             UUID clientSessionId = p.clientSessionId;
+    //             ClientProxy clientProxy = this.sessionIdToClientProxyMap.get(clientSessionId);
 
-                this.childrenNamespaces.add(lobby);
+    //             this.childrenNamespaces.add(lobby);
 
-                this.disconnectClient(clientSessionId);
-                lobby.connectClient(clientSessionId, clientProxy);
-                break;
+    //             this.disconnectClient(clientSessionId);
+    //             lobby.connectClient(clientSessionId, clientProxy);
+    //             break;
 
-            case "message":
-                break;
+    //         case "message":
+    //             break;
         
-            default:
-                break;
-        }
+    //         default:
+    //             break;
+    //     }
 
-        return responsePacket;
-    }
+    //     return responsePacket;
+    // }
 }

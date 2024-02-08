@@ -10,9 +10,9 @@ package com.mycompany.app.Game.Pente;
  */
 public class PenteTurn {
     // required
-    public final int posX;
-    public final int posY;
-    public final PenteBoardIdentifierEnum playerNumber;
+    private final int posX;
+    private final int posY;
+    private final PenteBoardIdentifierEnum playerNumber;
 
     // optional
     public final Boolean isTurnOneAction;
@@ -23,6 +23,22 @@ public class PenteTurn {
         this.playerNumber = builder.playerNumber;
         this.isTurnOneAction = builder.isTurnOneAction;
 
+    }
+
+    public int getPosX() {
+        return posX;
+    }
+
+    public int getPosY() {
+        return posY;
+    }
+
+    public PenteBoardIdentifierEnum getPlayerNumber() {
+        return playerNumber;
+    }
+
+    public Boolean getIsTurnOneAction() {
+        return isTurnOneAction;
     }
 
     /**

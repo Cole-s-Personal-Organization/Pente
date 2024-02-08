@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  redis:
+    image: "redis:latest"
+    volumes:
+      - "./RedisCache/redis.conf:/usr/local/etc/redis/redis.conf"
+    ports:
+      - "6379:6379"
+    command:
+      ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+  gameserver:
+    build:
+      context: ./GameServer
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+  
+  client-frontend:
+    build:
+      context: ./PlayerClient
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - gameserver
