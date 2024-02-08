@@ -26,7 +26,6 @@ import com.mycompany.app.Game.Pente.PenteBoardIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.Game.Pente.PenteGameSettings;
 import com.mycompany.app.Game.Pente.PenteTurn;
-import com.mycompany.app.WebServer.EndpointHelperFunctions;
 import com.mycompany.app.WebServer.RedisConnectionManager;
 import com.mycompany.app.WebServer.UuidValidator;
 import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
@@ -132,37 +131,38 @@ public class PenteGameEndpointHandler extends HttpServlet {
     private void handleGetListGameHeaders(HttpServletRequest req, HttpServletResponse resp)  {
         ServletContext context = req.getServletContext();
         RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        Set<String> serializedGameHeaders = new HashSet<>();;
 
+        // abort if null cache
         if (cacheManager == null) {
             System.err.println("Missing cache manager connection pool");
             return;
         }
 
+        // extract data from redis, convert to string for send back to client
         try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
             Set<GameServerInfo> gameHeaders = RedisPenteGameStore.getPenteGameHeaders(jedis);
-            Set<String> serializedGameHeaders = new HashSet<>();
 
             try {
                 for (GameServerInfo gameHeader : gameHeaders) {
                     serializedGameHeaders.add(mapper.writeValueAsString(gameHeader));
                 }
-                // return "";
             } catch (JsonProcessingException e) {
-                // return buildInternalServerProcessingError(); 
                 e.printStackTrace();
             }
+        }
 
-            try {
-                resp.setStatus(HttpServletResponse.SC_OK);
-                resp.setHeader("Location", "/gameserver/pente-game/list/head");
-                resp.setContentType("application/json");
-                resp.getWriter().write("{\"gameHeaders\": " + serializedGameHeaders + "}");
-            } catch (IOException e) {
-                // TODO: handle exception
-                System.err.println("Couldn't respond to request due to IOException");
-                e.printStackTrace();
-            }
-        } 
+        // construct success message return to client
+        try {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setHeader("Location", "/gameserver/pente-game/list/head");
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"gameHeaders\": " + serializedGameHeaders + "}");
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.err.println("Couldn't respond to request due to IOException");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -230,10 +230,9 @@ public class PenteGameEndpointHandler extends HttpServlet {
             String gameName;
             UUID creatorId; 
             LocalDateTime nowTime = LocalDateTime.now();
-
-            System.out.println("creatorId: " + req.getParameter("creatorId"));
         
             JsonNode postDataContent = EndpointHelperFunctions.getPostRequestBody(req);
+            System.out.println("Post data: " + postDataContent.toString());
 
             try {
                 creatorId = UUID.fromString(postDataContent.get("creatorId").asText());
@@ -503,12 +502,11 @@ public class PenteGameEndpointHandler extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        System.out.println("Get endpoint hit");
-        String jsonStringResponse = "";
+        System.out.println("Pente-Game GET handler hit");
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));
 
-        System.out.println("Request recieved: " + pathInfoArrayList.toString());
+        System.out.println("Request path: " + pathInfoArrayList.toString());
 
         // if(cache == null) {
         //     resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
@@ -535,15 +533,15 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 break;
 
             case getSpecificGameHeader: // GET gameserver/pente-game/{game-id}/head
-                jsonStringResponse = handleGetGameHeaderByGameId(
-                    UUID.fromString(pathInfoArrayList.get(1))
-                );
+                // jsonStringResponse = handleGetGameHeaderByGameId(
+                //     UUID.fromString(pathInfoArrayList.get(1))
+                // );
                 break;
 
             case getSpecificGameBoard: // GET gameserver/pente-game/{game-id}/board 
-                jsonStringResponse = handleGetGameStateByGameId(
-                    UUID.fromString(pathInfoArrayList.get(1))
-                );
+                // jsonStringResponse = handleGetGameStateByGameId(
+                //     UUID.fromString(pathInfoArrayList.get(1))
+                // );
                 break;
 
             case getlistGameHeaders: // GET gameserver/pente-game/list/head
@@ -551,7 +549,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 break;
 
             case getConnectionToGame: // GET gameserver/pente-game/{game-id}/sse-connection
-                jsonStringResponse = handleGetGameConnection(req, resp, UUID.randomUUID());
+                // jsonStringResponse = handleGetGameConnection(req, resp, UUID.randomUUID());
                 break;
         
             default:
@@ -567,11 +565,12 @@ public class PenteGameEndpointHandler extends HttpServlet {
         //   POST gameserver/pente-game/start - start a new pente game 
         //   POST gameserver/pente-game/move - post a move 
         //   POST gameserver/pente-game/leave - have a player leave a game, ends long running SSE stream
-        //   POST gameserver/pente-game/join - have a player join a game, establishes an long running SSE stream 
+        //   POST gameserver/pente-game/join - have a player join a game, establishes an long running SSE stream
+        System.out.println("Pente-Game POST handler hit"); 
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));
 
-        System.out.println("Request recieved: " + pathInfoArrayList.toString());
+        System.out.println("Request path: " + pathInfoArrayList.toString());
 
         // Jedis cache = connectJedisWithRetry();
         // if(cache == null) {

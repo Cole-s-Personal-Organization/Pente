@@ -1,4 +1,4 @@
-package com.mycompany.app.WebServer;
+package com.mycompany.app.WebServer.WebServlets;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class EndpointHelperFunctions {
      */
     public static JsonNode getPostRequestBody(HttpServletRequest req) {
         final ObjectMapper mapper = new ObjectMapper();
-        JsonNode postDataJsonNode = mapper.createObjectNode();
+        JsonNode postDataJsonNode = null;
 
         StringBuilder requestBody = new StringBuilder();
         try (BufferedReader reader = req.getReader()) {
