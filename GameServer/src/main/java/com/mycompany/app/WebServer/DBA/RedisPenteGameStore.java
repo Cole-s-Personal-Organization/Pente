@@ -1,4 +1,4 @@
-package com.mycompany.app.WebServer.DBO;
+package com.mycompany.app.WebServer.DBA;
 
 import java.awt.List;
 import java.io.IOException;

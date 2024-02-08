@@ -1,4 +1,4 @@
-package com.mycompany.app.WebServer.Endpoints;
+package com.mycompany.app.WebServer.WebServlets;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,10 +27,9 @@ import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.Game.Pente.PenteGameSettings;
 import com.mycompany.app.Game.Pente.PenteTurn;
 import com.mycompany.app.WebServer.EndpointHelperFunctions;
-import com.mycompany.app.WebServer.RedisBackedCache;
 import com.mycompany.app.WebServer.RedisConnectionManager;
 import com.mycompany.app.WebServer.UuidValidator;
-import com.mycompany.app.WebServer.DBO.RedisPenteGameStore;
+import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
 import com.mycompany.app.WebServer.Models.GameServerInfo.GameRunState;
 

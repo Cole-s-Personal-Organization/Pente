@@ -17,10 +17,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import com.mycompany.app.Game.Pente.PenteGameModel;
-import com.mycompany.app.WebServer.DBO.RedisPenteGameStore;
-import com.mycompany.app.WebServer.Endpoints.PenteGameEndpointHandler;
+import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
 import com.mycompany.app.WebServer.Models.GameServerInfo.GameRunState;
+import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler;
 
 import redis.clients.jedis.Jedis;
 
