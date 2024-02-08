@@ -103,3 +103,7 @@ Will be converted into:
 1. LIST for playLog, *ordered by insertion order*
 
         penteGame:<gameId>:playLog '{"playerNum": 1, ...}'
+
+## MySQL
+
+Our project requires a long term database solution to be used for storing game logs for future projects and improvement of the gameserver service. 
