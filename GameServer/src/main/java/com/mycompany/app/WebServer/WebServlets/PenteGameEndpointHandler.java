@@ -168,11 +168,37 @@ public class PenteGameEndpointHandler extends HttpServlet {
     /**
      * get game's header info corresponding to game id
      * e.g. GET gameserver/pente-game/{game-id}/head
-     * @param gameId
      * @return json string of game header
      */
-    private String handleGetGameHeaderByGameId(UUID gameId) {
-        return "";
+    private void handleGetGameHeaderByGameId(HttpServletRequest req, HttpServletResponse resp) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            Set<GameServerInfo> gameHeaders = RedisPenteGameStore.getPenteGameHeaderByGameId(jedis);
+            String serializedGameHeader = "";
+            try {
+                serializedGameHeader = mapper.writeValueAsString(gameHeader);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.setHeader("Location", "gameserver/pente-game/{game-id}/head");
+                resp.setContentType("application/json");
+                resp.getWriter().write("{\"gameHeader\": " + serializedGameHeader + "}");
+            } catch (IOException e) {
+                // TODO: handle exception
+                System.err.println("Couldn't respond to request due to IOException");
+                e.printStackTrace();
+            }
+        }
     }
 
     /**

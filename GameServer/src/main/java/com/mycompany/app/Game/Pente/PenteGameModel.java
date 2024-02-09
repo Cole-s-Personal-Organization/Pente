@@ -53,16 +53,21 @@ public class PenteGameModel {
         this.playerCaptures = playerCaptures;
     }
 
-    public boolean checkConsecutiveWinCon(PenteTurn turn) {
-        return checkNInARow(turn, this.gameSettings.numInARowToWin);
-    }
-
+    /**
+     * Checks if the player who just went has won by capturing enough pieces
+     * @param turn the turn that just occurred
+     * @return true if the player has won, false otherwise
+     */
     public boolean checkCaptureWinCon(PenteTurn turn) {
         int indexOfPlayer = getPlayerStoreIndexFromIdEnum(turn.getPlayerNumber());
         int numCaptures = playerCaptures[indexOfPlayer];
         return (numCaptures >= this.gameSettings.capturesToWin);
     }
 
+    /**
+     * @param playerEnumId
+     * @return the index of this player in the other data structures in this class
+     */
     private Integer getPlayerStoreIndexFromIdEnum(PenteBoardIdentifierEnum playerEnumId) {
         ArrayList<PenteBoardIdentifierEnum> enumValues = new ArrayList<>(Arrays.asList(PenteBoardIdentifierEnum.values()));
         return enumValues.indexOf(playerEnumId) - 1;
@@ -82,10 +87,11 @@ public class PenteGameModel {
         this.gameBoard[turn.getPosY()][turn.getPosX()] = turn.getPlayerNumber();
     }
 
-    // we should rename isTurnOneAction or create an isTurnTwoAction variable
-    // we should probably only allow odd numbers of rows/columns with the pro
-    // ruleset, or i can add logic to support even numbers of rows/COLS but that
-    // would get very complicated without an isTurnTwoAction boolean
+    /**
+     * Checks if a mock turn would be valid for a player to take. Throws various exceptions if
+     * the turn is not valid.
+     * @param turn
+     */
     private void checkMove(PenteTurn turn) throws InvalidTurnException {
         if (turn.getPosX() >= this.COLS || turn.getPosY() >= this.ROWS || turn.getPosX() < 0 || turn.getPosY() < 0) {
             throw new InvalidTurnException("Location out of bounds.");
@@ -101,7 +107,12 @@ public class PenteGameModel {
         }
     }
 
-    // this method checks that player 1's first and second move conform to the pente pro ruleset
+    /**
+     * The pente pro ruleset has certain requirements for player 1's first two turns. This method
+     * checks that a turn conforms to this ruleset.
+     * @param turn
+     * @return true if the move conforms to the pente pro ruleset, false otherwise
+     */
     private boolean checkProSpecialRules(PenteTurn turn) {
         int proRuleSecondPositionOffset = 3;
         if (turn.isTurnOneAction != null && turn.isTurnOneAction) {
@@ -122,10 +133,18 @@ public class PenteGameModel {
         return true;
     }
 
-    // this method removes pieces that were caputred on this turn
+    /**
+     * This method removes pieces that were captured on this turn and increments the counter for the
+     * number of pieces captured.
+     * @param turn
+     */
+    // TODO: fix this method since it should return void and update captures on its own
     public int removeCaptured(PenteTurn turn) {
         int numCaptured = 0;
+
+        // the directions the helper function will increment in to check for captures
         int[][] incrementDirections = {{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}};
+
         for (int i = 1; i < 8; i++) {
             numCaptured += removeCapturedInDirection(turn, incrementDirections[i][0],
             incrementDirections[i][1]);
@@ -133,10 +152,16 @@ public class PenteGameModel {
         return numCaptured;
     }
 
-    // helper method for removeCaptured that checks for captures in a specified direction and
-    // removes the pieces
-    // i.e. x_dir = 1 and y_dir = 0 checks for captures to the right and removes
-    // any pieces that were captured from the board. Returns the number of pieces captured
+    /**
+     * Helper method for removeCaptured that checks for captures in a specified direction and
+     * removes those pieces.
+     * For example, x_dir = 1 and y_dir = 0 would check for and remove captured pieces to the right
+     * from the piece that was just placed and return the number of pieces captured.
+     * @param turn
+     * @param x_dir the x-increment for the direction of the search, should be -1, 0, or 1
+     * @param y_dir the y-increment for the direction of the search, should be -1, 0, or 1
+     * @return the number of pieces captured in the chosen direction
+     */
     private int removeCapturedInDirection(PenteTurn turn, int x_dir, int y_dir) {
         int curr_x = turn.getPosX() + x_dir;
         int curr_y = turn.getPosY() + y_dir;
@@ -160,8 +185,13 @@ public class PenteGameModel {
         return 0;
     }
 
-    // this method checks if a player has won by having enough pieces in a row after a given turn
-    public boolean checkNInARow(PenteTurn turn, int n) {
+    /**
+     * Checks if this turn has caused the player to win by having enough consecutive pieces
+     * @param turn the turn which just happened
+     * @return true if the player has won, false otherwise
+     */
+    public boolean checkConsecutiveWinCon(PenteTurn turn) {
+        int numInARowToWin = this.gameSettings.numInARowToWin;
         if (checkNInADirection(turn, n, 1, 1) || checkNInADirection(turn, n, 1, 0) ||
             checkNInADirection(turn, n, 1, -1) || checkNInADirection(turn, n, 0, 1)) {
             return true;
@@ -169,9 +199,17 @@ public class PenteGameModel {
         return false;
     }
 
-    // this helper method checks if a player has enough pieces in a row in a given direction
-    // for example passing in x_dir = 1 and y_dir = 0 will check if the player has enough in a row
-    // in the right/left direction
+    /**
+     * Helper method for checkConsecutiveWinCon that checks if a player has enough pieces in a row
+     * in a given direction to satisfy the win condition.
+     * For example, passing in x_dir = 1 and y_dir = 0 will check if the player has enough pieces in
+     * a row in the right/left direction from the piece they just played on this turn.
+     * @param turn
+     * @param n the number of pieces in a row required to win
+     * @param x_dir the x-increment for the direction of the search, should be -1, 0, or 1
+     * @param y_dir the y-increment for the direction of the search, should be -1, 0, or 1
+     * @return true if the player has satisfied the win con in the given direction, false otherwise
+     */
     private boolean checkNInADirection(PenteTurn turn, int n, int x_dir, int y_dir) {
         int counter = 1;
         int curr_x = turn.getPosX() + x_dir;

@@ -86,6 +86,57 @@ public class RedisPenteGameStore {
         return headers;
     }
 
+    public static GameServerInfo getPenteGameHeaderByGameId(Jedis jedis, UUID gameId) {
+        String header;
+        String gameIdAsString = gameId.tostring();
+        GameServerInfo header;
+        try {
+            String stringifiedGameHeader = jedis.hget(/*hashset name goes here*/, gameIdAsString);
+            JsonNode jsonHeader = mapper.readTree(stringifiedGameHeader);
+
+            UUID gameId = null;
+            String lobbyName = null;
+            UUID gameCreator = null;
+            String timeCreatedAt = null;
+            GameRunState runState = null;
+
+            JsonNode gameIdNode = jsonHeader.get("gameId");
+            JsonNode lobbyNameNode = jsonHeader.get("lobbyName");
+            JsonNode gameCreatorIdNode = jsonHeader.get("gameCreator");
+            JsonNode timeCreatedAtNode = jsonHeader.get("timeCreatedAt");
+            JsonNode runStateNode = jsonHeader.get("runState");
+
+            if (gameIdNode != null && gameIdNode.isTextual()) {
+                gameId = UUID.fromString(gameIdNode.asText());
+            }
+            if (lobbyNameNode != null && lobbyNameNode.isTextual()) {
+                lobbyName = lobbyNameNode.asText();
+            }
+            if (gameCreatorIdNode != null && gameCreatorIdNode.isTextual() && UuidValidator.isValidUUID(gameCreatorIdNode.asText())) {
+                gameCreator = UUID.fromString(gameCreatorIdNode.asText());
+            }
+            if (timeCreatedAtNode != null && timeCreatedAtNode.isTextual()) {
+                timeCreatedAt = timeCreatedAtNode.asText();
+            }
+            if (runStateNode != null && runStateNode.isTextual()) {
+                runState = GameRunState.valueOf(runStateNode.asText());
+            }
+
+            if (gameId != null && lobbyName != null && gameCreator != null && timeCreatedAt != null && runState != null) {
+                header = new GameServerInfo(
+                gameId,
+                lobbyName,
+                gameCreator,
+                timeCreatedAt,
+                runState
+                );
+            }
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+        return header;
+    }
+
     // public static void getPenteGameHeaderByGameId(Jedis jedis, UUID gameId) {
     //     String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
     // }
