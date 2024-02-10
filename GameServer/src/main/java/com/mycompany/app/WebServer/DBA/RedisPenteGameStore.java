@@ -87,14 +87,13 @@ public class RedisPenteGameStore {
     }
 
     public static GameServerInfo getPenteGameHeaderByGameId(Jedis jedis, UUID gameId) {
-        String header;
-        String gameIdAsString = gameId.tostring();
-        GameServerInfo header;
+        String gameIdAsString = gameId.toString();
+        GameServerInfo header = null;
         try {
-            String stringifiedGameHeader = jedis.hget(/*hashset name goes here*/, gameIdAsString);
+            String hashKey = GAME_PREFIX + gameIdAsString;
+            String stringifiedGameHeader = jedis.hget(hashKey, "header");
             JsonNode jsonHeader = mapper.readTree(stringifiedGameHeader);
 
-            UUID gameId = null;
             String lobbyName = null;
             UUID gameCreator = null;
             String timeCreatedAt = null;
@@ -145,10 +144,14 @@ public class RedisPenteGameStore {
         try {
             UUID gameId = header.getGameId();
             String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+            System.out.println("Hash key set to: " + SPECIFIED_GAME_PREFIX);
 
             // insert header
             String serializedHeader = mapper.writeValueAsString(header);
             jedis.sadd(GAME_HEADERS_PREFIX, serializedHeader);
+
+            // insert game detail hash 
+            jedis.hset(SPECIFIED_GAME_PREFIX, "header", serializedHeader);
 
             // insert game detail hash 
             String serializedPlayerIdList = "[]";
@@ -166,6 +169,14 @@ public class RedisPenteGameStore {
             String serializedBoardState = mapper.writeValueAsString(game.getGameBoard());
             jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedBoardState);
 
+            // System.out.println(String.join(
+            //     "Hash Created: {\n",
+            //     "    field \"header\": " + serializedHeader + "\n",
+            //     "    field \"players\": " + serializedPlayerIdList + "\n",
+            //     "    field \"settings\": " + serializedGameSettings + "\n",
+            //     "    field \"playerCaptures\": " + serializedPlayerCaptures + "\n",
+            //     "    field \"currentBoard\": " + serializedBoardState + "\n"
+            // ));
         } catch (Exception e) {
             // TODO: handle exception
         }

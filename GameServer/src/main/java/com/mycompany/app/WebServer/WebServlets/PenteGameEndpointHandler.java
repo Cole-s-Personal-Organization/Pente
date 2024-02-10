@@ -170,7 +170,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * e.g. GET gameserver/pente-game/{game-id}/head
      * @return json string of game header
      */
-    private void handleGetGameHeaderByGameId(HttpServletRequest req, HttpServletResponse resp) {
+    private void handleGetGameHeaderByGameId(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
         ServletContext context = req.getServletContext();
         RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
 
@@ -180,7 +180,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
         }
 
         try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
-            Set<GameServerInfo> gameHeaders = RedisPenteGameStore.getPenteGameHeaderByGameId(jedis);
+            GameServerInfo gameHeader = RedisPenteGameStore.getPenteGameHeaderByGameId(jedis, gameId);
             String serializedGameHeader = "";
             try {
                 serializedGameHeader = mapper.writeValueAsString(gameHeader);
@@ -561,14 +561,12 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 break;
 
             case getSpecificGameHeader: // GET gameserver/pente-game/{game-id}/head
-                jsonStringResponse = handleGetGameHeaderByGameId(
-                    UUID.fromString(pathInfoArrayList.get(1))
-                );
+                handleGetGameHeaderByGameId(req, resp, UUID.fromString(pathInfoArrayList.get(0)));
                 break;
 
             case getSpecificGameBoard: // GET gameserver/pente-game/{game-id}/board 
                 jsonStringResponse = handleGetGameStateByGameId(
-                    UUID.fromString(pathInfoArrayList.get(1))
+                    UUID.fromString(pathInfoArrayList.get(0))
                 );
                 break;
 
