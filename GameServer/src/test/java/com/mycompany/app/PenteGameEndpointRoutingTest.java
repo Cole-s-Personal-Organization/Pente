@@ -10,10 +10,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
-public class PenteGameEndpointTest {
-    // ----------------------------------------------------------------------------------------------------------------------------
-    //      Endpoint router tests
-    // ----------------------------------------------------------------------------------------------------------------------------
+public class PenteGameEndpointRoutingTest {
     @Test
     public void testRouteGetEndpoints_validUUID_head() {
         ArrayList<String> pathInfo = new ArrayList<>();

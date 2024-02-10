@@ -26,9 +26,7 @@ public class EndpointHelperFunctionsTest {
         when(request.getReader()).thenReturn(reader);
 
         JsonNode expectedJson = new ObjectMapper().readTree(requestBody);
-        System.out.println("EXPECTED: " + expectedJson.toString());
         JsonNode result = EndpointHelperFunctions.getPostRequestBody(request);
-        System.out.println("RESULT: " + result.toString());
 
         assertEquals(expectedJson, result);
     }
