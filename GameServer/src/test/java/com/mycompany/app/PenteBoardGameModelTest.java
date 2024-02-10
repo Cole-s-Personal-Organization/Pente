@@ -10,7 +10,7 @@ import org.junit.Assert;
 import com.mycompany.app.Game.Pente.*;
 
 public class PenteBoardGameModelTest {
-    
+
     @Test
     public void constructDefaultGameBoard() {
         PenteGameModel model = new PenteGameModel();
@@ -146,7 +146,6 @@ public class PenteBoardGameModelTest {
         PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(9, 8, playerNum).build();
         PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(9, 7, playerNum).build();
         PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(9, 6, playerNum).build();
-        int n = 5;
         boolean fiveInARow = false;
         boolean expectedValue = false;
         try {
@@ -154,7 +153,7 @@ public class PenteBoardGameModelTest {
             model.setMove(turn2);
             model.setMove(turn3);
             model.setMove(turn4);
-            fiveInARow = model.checkNInARow(turn4, n);
+            fiveInARow = model.checkConsecutiveWinCon(turn4);
         } catch (Exception e) {
             Assert.fail();
         }
@@ -170,7 +169,6 @@ public class PenteBoardGameModelTest {
         PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(9, 7, playerNum).build();
         PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(9, 5, playerNum).build();
         PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(9, 6, playerNum).build();
-        int n = 5;
         boolean fiveInARow = false;
         boolean expectedValue = true;
         try {
@@ -179,7 +177,7 @@ public class PenteBoardGameModelTest {
             model.setMove(turn3);
             model.setMove(turn4);
             model.setMove(turn5);
-            fiveInARow = model.checkNInARow(turn5, n);
+            fiveInARow = model.checkConsecutiveWinCon(turn5);
         } catch (Exception e) {
             Assert.fail();
         }
@@ -195,7 +193,6 @@ public class PenteBoardGameModelTest {
         PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(2, 2, playerNum).build();
         PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(1, 1, playerNum).build();
         PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(0, 0, playerNum).build();
-        int n = 5;
         boolean fiveInARow = false;
         boolean expectedValue = true;
         try {
@@ -204,7 +201,7 @@ public class PenteBoardGameModelTest {
             model.setMove(turn3);
             model.setMove(turn4);
             model.setMove(turn5);
-            fiveInARow = model.checkNInARow(turn5, n);
+            fiveInARow = model.checkConsecutiveWinCon(turn5);
         } catch (Exception e) {
             Assert.fail();
         }

@@ -2,14 +2,13 @@ package com.mycompany.app.Game.Pente;
 
 /**
  * A representation of Pente game settings.
- * 
+ *
  * @author Dan, Cole
  * @version 1.0.0
  */
 public class PenteGameSettings {
     public final int numInARowToWin;
     public final int capturesToWin;
-    
     private PenteGameSettings(PenteGameSettingsBuilder builder) {
         this.numInARowToWin = builder.numInARowToWin;
         this.capturesToWin = builder.capturesToWin;

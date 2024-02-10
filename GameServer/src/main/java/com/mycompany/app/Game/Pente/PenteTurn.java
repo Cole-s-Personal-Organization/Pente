@@ -4,7 +4,7 @@ package com.mycompany.app.Game.Pente;
 
 /**
  * A representation of Pente game turn.
- * 
+ *
  * @author Dan, Cole
  * @version 1.0.0
  */
@@ -43,7 +43,7 @@ public class PenteTurn {
 
     /**
      * A builder object which supports the building of a pente game turn object.
-     * 
+     *
      * @author Dan, Cole
      * @version 1.0.0
      */

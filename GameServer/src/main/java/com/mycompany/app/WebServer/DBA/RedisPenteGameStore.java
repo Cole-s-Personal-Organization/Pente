@@ -86,6 +86,56 @@ public class RedisPenteGameStore {
         return headers;
     }
 
+    public static GameServerInfo getPenteGameHeaderByGameId(Jedis jedis, UUID gameId) {
+        String gameIdAsString = gameId.toString();
+        GameServerInfo header = null;
+        try {
+            String hashKey = GAME_PREFIX + gameIdAsString;
+            String stringifiedGameHeader = jedis.hget(hashKey, "header");
+            JsonNode jsonHeader = mapper.readTree(stringifiedGameHeader);
+
+            String lobbyName = null;
+            UUID gameCreator = null;
+            String timeCreatedAt = null;
+            GameRunState runState = null;
+
+            JsonNode gameIdNode = jsonHeader.get("gameId");
+            JsonNode lobbyNameNode = jsonHeader.get("lobbyName");
+            JsonNode gameCreatorIdNode = jsonHeader.get("gameCreator");
+            JsonNode timeCreatedAtNode = jsonHeader.get("timeCreatedAt");
+            JsonNode runStateNode = jsonHeader.get("runState");
+
+            if (gameIdNode != null && gameIdNode.isTextual()) {
+                gameId = UUID.fromString(gameIdNode.asText());
+            }
+            if (lobbyNameNode != null && lobbyNameNode.isTextual()) {
+                lobbyName = lobbyNameNode.asText();
+            }
+            if (gameCreatorIdNode != null && gameCreatorIdNode.isTextual() && UuidValidator.isValidUUID(gameCreatorIdNode.asText())) {
+                gameCreator = UUID.fromString(gameCreatorIdNode.asText());
+            }
+            if (timeCreatedAtNode != null && timeCreatedAtNode.isTextual()) {
+                timeCreatedAt = timeCreatedAtNode.asText();
+            }
+            if (runStateNode != null && runStateNode.isTextual()) {
+                runState = GameRunState.valueOf(runStateNode.asText());
+            }
+
+            if (gameId != null && lobbyName != null && gameCreator != null && timeCreatedAt != null && runState != null) {
+                header = new GameServerInfo(
+                gameId,
+                lobbyName,
+                gameCreator,
+                timeCreatedAt,
+                runState
+                );
+            }
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+        return header;
+    }
+
     // public static void getPenteGameHeaderByGameId(Jedis jedis, UUID gameId) {
     //     String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
     // }
@@ -94,10 +144,14 @@ public class RedisPenteGameStore {
         try {
             UUID gameId = header.getGameId();
             String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+            System.out.println("Hash key set to: " + SPECIFIED_GAME_PREFIX);
 
             // insert header
             String serializedHeader = mapper.writeValueAsString(header);
             jedis.sadd(GAME_HEADERS_PREFIX, serializedHeader);
+
+            // insert game detail hash 
+            jedis.hset(SPECIFIED_GAME_PREFIX, "header", serializedHeader);
 
             // insert game detail hash 
             String serializedPlayerIdList = "[]";
@@ -115,6 +169,14 @@ public class RedisPenteGameStore {
             String serializedBoardState = mapper.writeValueAsString(game.getGameBoard());
             jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedBoardState);
 
+            // System.out.println(String.join(
+            //     "Hash Created: {\n",
+            //     "    field \"header\": " + serializedHeader + "\n",
+            //     "    field \"players\": " + serializedPlayerIdList + "\n",
+            //     "    field \"settings\": " + serializedGameSettings + "\n",
+            //     "    field \"playerCaptures\": " + serializedPlayerCaptures + "\n",
+            //     "    field \"currentBoard\": " + serializedBoardState + "\n"
+            // ));
         } catch (Exception e) {
             // TODO: handle exception
         }
