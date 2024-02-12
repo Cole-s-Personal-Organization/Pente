@@ -2,8 +2,8 @@ package com.mycompany.app;
 
 import org.junit.Test;
 
-import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler;
-import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler.EndpointRouterResponseId;
+import com.mycompany.app.WebServer.WebServlets.Pente.PenteGameEndpointHandler;
+import com.mycompany.app.WebServer.WebServlets.Pente.PenteGameEndpointHandler.EndpointRouterResponseId;
 
 import java.util.ArrayList;
 import java.util.UUID;

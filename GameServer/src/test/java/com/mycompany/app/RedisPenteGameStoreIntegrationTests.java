@@ -20,7 +20,7 @@ import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
 import com.mycompany.app.WebServer.Models.GameServerInfo.GameRunState;
-import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler;
+import com.mycompany.app.WebServer.WebServlets.Pente.PenteGameEndpointHandler;
 
 import redis.clients.jedis.Jedis;
 

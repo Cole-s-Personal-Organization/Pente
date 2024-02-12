@@ -1,4 +1,4 @@
-package com.mycompany.app.WebServer.WebServlets;
+package com.mycompany.app.WebServer.WebServlets.Pente;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,6 +18,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.AbstractMap.SimpleEntry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +35,7 @@ import com.mycompany.app.WebServer.UuidValidator;
 import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
 import com.mycompany.app.WebServer.Models.GameServerInfo.GameRunState;
+import com.mycompany.app.WebServer.WebServlets.EndpointHelperFunctions;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -41,6 +46,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPubSub;
 
 /**
  * A Servlet for handling all requests to /pente-game/*
@@ -112,8 +118,9 @@ public class PenteGameEndpointHandler extends HttpServlet {
 
 
 
-    // public Jedis cache;
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    private static final Logger logger = LoggerFactory.getLogger(PenteGameEndpointHandler.class);
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -267,27 +274,66 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param gameId
      */
     private void handleGetGameConnection(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        Jedis channelSubscriber;
+        ArrayList<SimpleEntry<String, String>> messages = new ArrayList<>();
+
+        // Set content type to text/event-stream
         resp.setContentType("text/event-stream");
         resp.setCharacterEncoding("UTF-8");
         resp.setHeader("Cache-Control", "no-cache");
         resp.setHeader("Connection", "keep-alive");
 
-        try {
-            final PrintWriter writer = resp.getWriter();
+        
 
-            // Send a dummy event every second for demonstration purposes
-            scheduler.scheduleAtFixedRate(() -> {
-                writer.write("data: {\"message\": \"This is a server-sent event.\"}\n\n");
-                writer.flush();
-            }, 0, 1, TimeUnit.SECONDS);
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            String channelName = "";
+            
+            jedis.subscribe(new JedisPubSub() {
+                @Override
+                public void onMessage(String channel, String message) {
+                    messages.add(new SimpleEntry<String, String>(channel, message));
+                }
+            }, channelName);
+        }
+        
+
+        try (PrintWriter writer = resp.getWriter()) {
+            // Keep the connection open
+            while (!Thread.interrupted()) {
+                try {
+                    if (messages.size() > 0) {
+                        SimpleEntry<String, String> message = messages.remove(0);
+
+                        /*
+                         * EVENT MESSAGE FORMAT:
+                         *      id: <num>
+                         *      event: <event_name>
+                         *      data: <json_data>
+                         * \n
+                         */
+
+                        writer.write(String.format("id: {}\n", 1));
+                        writer.write("event: sampleEvent\n");
+                        writer.write("data: ");
+                        writer.write("\n");
+                        writer.flush();
+                    }
+
+                    // Sleep for some time before sending the next event
+                    Thread.sleep(1000); 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
+                }
+            }
+            
+            // Close the writer and release resources
+            writer.close();
         } catch (Exception e) {
             // TODO: handle exception
         }
-        resp.setStatus(HttpServletResponse.SC_OK);
-    }
-
-    private void sendEvent(PrintWriter writer, String eventData) {
-
     }
 
     // --------------------------------------------------------------------------------
@@ -529,10 +575,8 @@ public class PenteGameEndpointHandler extends HttpServlet {
         }
 
         String firstPathElement = pathInfo.get(0);
-        System.out.println("First element: " + firstPathElement);
 
         if (UuidValidator.isValidUUID(firstPathElement)) {
-            System.out.println("First element Id match");
             if (pathInfo.size() == 1) {
                 // prevent GET gameserver/pente-game/{game-id}
                 return EndpointRouterResponseId.missingEndpointError;
@@ -559,7 +603,6 @@ public class PenteGameEndpointHandler extends HttpServlet {
             }
 
             String secondPathElement = pathInfo.get(1);
-            System.out.println("Second element " + secondPathElement);
             switch (secondPathElement) {
                 case "head":
                     return EndpointRouterResponseId.getlistGameHeaders;
@@ -610,28 +653,53 @@ public class PenteGameEndpointHandler extends HttpServlet {
         // prevent non-understood endpoint path
         return EndpointRouterResponseId.missingEndpointError;
     }
+
+    private void logRequestDetails(HttpServletRequest request) {
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append("[REQUEST] - ");
+        logMessage.append("Method: ").append(request.getMethod()).append(", ");
+        logMessage.append("URL: ").append(request.getRequestURL()).append(", ");
+        logMessage.append("Parameters: ").append(request.getQueryString()).append(", ");
+        logMessage.append("Headers: ");
+        request.getHeaderNames().asIterator().forEachRemaining(headerName ->
+                logMessage.append(headerName).append(": ").append(request.getHeader(headerName)).append(", "));
+        logMessage.append("Remote Address: ").append(request.getRemoteAddr());
+        System.out.println(logMessage);
+        // logger.info(logMessage.toString());
+    }
+
+    private void logResponseDetails(HttpServletResponse response) {
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append("[RESPONSE] - ");
+        logMessage.append("Status Code: ").append(response.getStatus()).append(", ");
+        logMessage.append("Headers: ");
+        for (String headerName : response.getHeaderNames()) {
+            logMessage.append(headerName).append(": ").append(response.getHeader(headerName)).append(", ");
+        }
+        System.out.println(logMessage);
+        // logger.info(logMessage.toString());
+    }
     
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        System.out.println("Pente-Game GET handler hit");
+        logRequestDetails(req);
+
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));
         UUID gameId;
 
         System.out.println("Request path: " + pathInfoArrayList.toString());
 
-        // if(cache == null) {
-        //     resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-        //     resp.getWriter().println("Service Unavailable: Backend service unable to connect to Redis");
-        //     return;
-        // }
-
-
         EndpointRouterResponseId endpointResponseId = routeGetEndpoints(pathInfoArrayList);
+    
+        if (endpointResponseId != EndpointRouterResponseId.missingEndpointError) {
+            System.out.println("Routing to endpoint: \"" + endpointResponseId + "\" (" + req.getPathInfo() + ")");
+        }
+
         switch (endpointResponseId) { 
             case missingEndpointError: // non-matched endpoint
-                System.out.println("No matching path for " + pathInfoArrayList.toString());
+                System.out.println("\t- No matching path for " + pathInfoArrayList.toString());
 
                 try {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -673,6 +741,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
             default:
                 break;
         }
+        logResponseDetails(resp);
     }
 
 
@@ -684,21 +753,19 @@ public class PenteGameEndpointHandler extends HttpServlet {
         //   POST gameserver/pente-game/{game-id}/move - post a move 
         //   POST gameserver/pente-game/{game-id}/leave - have a player leave a game, ends long running SSE stream
         //   POST gameserver/pente-game/{game-id}/join - have a player join a game
-        System.out.println("Pente-Game POST handler hit"); 
+        logRequestDetails(req);
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));
         UUID gameId;
 
-        System.out.println("Request path: " + pathInfoArrayList.toString());
-
-        // Jedis cache = connectJedisWithRetry();
-        // if(cache == null) {
-        //     resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-        //     resp.getWriter().println("Service Unavailable: Backend service unable to connect to Redis");
-        //     return;
-        // }
+        System.out.println("\t- Request path: " + pathInfoArrayList.toString());
 
         EndpointRouterResponseId endpointResponseId = routePostEndpoints(pathInfoArrayList);
+        
+        if (endpointResponseId != EndpointRouterResponseId.missingEndpointError) {
+            System.out.println("Routing to endpoint: \"" + endpointResponseId + "\" (" + req.getPathInfo() + ")");
+        }
+
         switch (endpointResponseId) { 
             case missingEndpointError: // non-matched endpoint
                 System.out.println("No matching path for " + pathInfoArrayList.toString());
@@ -734,6 +801,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
             default:
                 break;
         }
+        logResponseDetails(resp);
     }
 
     @Override
