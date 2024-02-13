@@ -171,6 +171,10 @@ public class RedisPenteGameStore {
             String serializedBoardState = mapper.writeValueAsString(game.getGameBoard());
             jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedBoardState);
 
+            // insert turn counter 
+            String serailizedTurnCounter = String.valueOf(0);
+            jedis.hset(SPECIFIED_GAME_PREFIX, "turnCounter", serailizedTurnCounter);
+
             // System.out.println(String.join(
             //     "Hash Created: {\n",
             //     "    field \"header\": " + serializedHeader + "\n",
@@ -361,7 +365,22 @@ public class RedisPenteGameStore {
         return PenteBoardIdentifierEnum.values()[playerNumberEnumIndex];
     }
  
+    public static Integer getGameTurnCounter(Jedis jedis, UUID gameId) {
+        String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+        
+        String serializedCurrBoardState = jedis.hget(SPECIFIED_GAME_PREFIX, "turnCounter");
 
+        try {
+            if (serializedCurrBoardState != null) {
+                Integer turnCounter = mapper.readValue(serializedCurrBoardState, new TypeReference<Integer>() {});
+                
+                return turnCounter;
+            }
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+        return null;
+    } 
 
     public static void addToPenteGameLog(Jedis jedis, UUID gameId, String log) {
         

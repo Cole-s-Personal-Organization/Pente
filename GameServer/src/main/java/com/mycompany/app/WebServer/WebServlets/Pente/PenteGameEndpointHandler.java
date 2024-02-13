@@ -64,6 +64,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
  * <li> GET gameserver/pente-game/{game-id}/board - get game's board state corresponding to game id
  * <li> GET gameserver/pente-game/{game-id}/players - get game's information regarding player join status
  * <li> GET gameserver/pente-game/{game-id}/sse-connect - get sse connection to game session
+ * <li> GET gameserver/pente-game/{game-id}/turn-counter - get a games turn counter
  * 
  * <li> POST gameserver/pente-game/create - create a new pente game 
  *          - creator-id (UUID)
@@ -110,6 +111,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
         getSpecificGameBoard,
         getSSEConnectionToGame,
         getPlayersInGame,
+        getTurnCounter,
 
         // post endpoints
         postCreateGame,
@@ -272,6 +274,37 @@ public class PenteGameEndpointHandler extends HttpServlet {
         }
     } 
 
+    private void handleGetTurnCounter(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        String serializedTurnCounter = null;
+
+        // abort if null cache
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        // extract data from redis, convert to string for send back to client
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            Integer turnCounter = RedisPenteGameStore.getGameTurnCounter(jedis, gameId);
+
+            serializedTurnCounter = String.valueOf(turnCounter);
+        }
+
+        // construct success message return to client
+        try {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setHeader("Location", "/gameserver/pente-game/{game-id}/turnCounter");
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"turnCounter\": " + serializedTurnCounter + "}");
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.err.println("Couldn't respond to request due to IOException");
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Get endpoint used for establishing an sse connection
      * e.g. GET gameserver/pente-game/{game-id}/sse-connect 
@@ -306,12 +339,13 @@ public class PenteGameEndpointHandler extends HttpServlet {
         });
         subscriptionThread.start();
         
-
+        // block endpoint thread to sustain connection
+        //   respond to incoming events relevant to game listening to triggered by other endpoint requests
         try (PrintWriter writer = resp.getWriter()) {
             System.out.println("Response writer grabbed.");
             writer.write("connected");
             writer.flush();
-            // Keep the connection open
+            
             while (!Thread.interrupted()) {
                 try {
                     if (events.size() > 0) {
@@ -335,7 +369,6 @@ public class PenteGameEndpointHandler extends HttpServlet {
                         }
                     }
 
-                    // Sleep for some time before sending the next event
                     Thread.sleep(1000); 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -420,7 +453,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param gameId
      * @param settings
      */
-    private void handlePostGameSettings(UUID gameId, PenteGameSettings settings) {
+    private void handlePostGameSettings(HttpServletRequest req, HttpServletResponse resp, UUID gameId, PenteGameSettings settings) {
 
     }
 
@@ -430,7 +463,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param gameId
      * @param timeStamp
      */
-    private void handlePostStartGame(UUID gameId, Date timeStamp) {
+    private void handlePostStartGame(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
 
     } 
 
@@ -448,7 +481,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param timestamp
      * @param move
      */
-    private void handlePostGameMove(UUID gameId, Date timestamp, PenteTurn move) {
+    private void handlePostGameMove(HttpServletRequest req, HttpServletResponse resp, UUID gameId, PenteTurn move) {
         // playing a move will post move data to the server 
 
         // use sse's to stream game changes back to the player 
@@ -462,7 +495,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param playerId
      * @param timestamp
      */
-    private void handlePostLeaveGame(UUID gameId, UUID playerId, Date timestamp) {
+    private void handlePostLeaveGame(HttpServletRequest req, HttpServletResponse resp, UUID gameId, UUID playerId) {
 
     }
 
@@ -607,8 +640,8 @@ public class PenteGameEndpointHandler extends HttpServlet {
         String firstPathElement = pathInfo.get(0);
 
         if (UuidValidator.isValidUUID(firstPathElement)) {
-            if (pathInfo.size() == 1) {
-                // prevent GET gameserver/pente-game/{game-id}
+            if (pathInfo.size() == 1 || pathInfo.size() > 2) {
+                // prevent GET gameserver/pente-game/{game-id} and GET gameserver/pente-game/{game-id}/*/*
                 return EndpointRouterResponseId.missingEndpointError;
             }
 
@@ -622,13 +655,15 @@ public class PenteGameEndpointHandler extends HttpServlet {
                     return EndpointRouterResponseId.getPlayersInGame;
                 case "sse-connect": 
                     return EndpointRouterResponseId.getSSEConnectionToGame;
+                case "turn-counter":
+                    return EndpointRouterResponseId.getTurnCounter;
                 default:
                     return EndpointRouterResponseId.missingEndpointError;
             }
         }
         else if (firstPathElement.equals("list")) {
             if (pathInfo.size() == 1) {
-                // prevent GET gameserver/pente-game/list
+                // prevent GET gameserver/pente-game/list and GET gameserver/pente-game/list/*/*
                 return EndpointRouterResponseId.missingEndpointError;
             }
 
@@ -640,11 +675,11 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 default:
                     return EndpointRouterResponseId.missingEndpointError;
             }
+        } else {
+            // prevent non-understood endpoint path
+            System.out.println("First element not understood");
+            return EndpointRouterResponseId.missingEndpointError;
         }
-
-        // prevent non-understood endpoint path
-        System.out.println("First element not understood");
-        return EndpointRouterResponseId.missingEndpointError;
     } 
 
     public static EndpointRouterResponseId routePostEndpoints(ArrayList<String> pathInfo) {
