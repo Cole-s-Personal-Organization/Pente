@@ -2,18 +2,15 @@ package com.mycompany.app;
 
 import org.junit.Test;
 
-import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler;
-import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler.EndpointRouterResponseId;
+import com.mycompany.app.WebServer.WebServlets.Pente.PenteGameEndpointHandler;
+import com.mycompany.app.WebServer.WebServlets.Pente.PenteGameEndpointHandler.EndpointRouterResponseId;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
-public class PenteGameEndpointTest {
-    // ----------------------------------------------------------------------------------------------------------------------------
-    //      Endpoint router tests
-    // ----------------------------------------------------------------------------------------------------------------------------
+public class PenteGameEndpointRoutingTest {
     @Test
     public void testRouteGetEndpoints_validUUID_head() {
         ArrayList<String> pathInfo = new ArrayList<>();

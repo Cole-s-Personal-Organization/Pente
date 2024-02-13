@@ -27,7 +27,7 @@ public class PenteBoardGameModelTest {
     @Test
     public void basicSetMove() {
         PenteGameModel model = new PenteGameModel();
-
+        
         // move at 5,5
         int posX = 5;
         int posY = 5;

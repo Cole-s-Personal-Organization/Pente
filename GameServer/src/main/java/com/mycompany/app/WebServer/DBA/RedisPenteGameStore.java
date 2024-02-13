@@ -2,8 +2,10 @@ package com.mycompany.app.WebServer.DBA;
 
 import java.awt.List;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -169,6 +171,10 @@ public class RedisPenteGameStore {
             String serializedBoardState = mapper.writeValueAsString(game.getGameBoard());
             jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedBoardState);
 
+            // insert turn counter 
+            String serailizedTurnCounter = String.valueOf(0);
+            jedis.hset(SPECIFIED_GAME_PREFIX, "turnCounter", serailizedTurnCounter);
+
             // System.out.println(String.join(
             //     "Hash Created: {\n",
             //     "    field \"header\": " + serializedHeader + "\n",
@@ -192,8 +198,8 @@ public class RedisPenteGameStore {
                 ArrayList<String> playerStrIdList = mapper.readValue(serializedPlayerList, new TypeReference<ArrayList<String>>() {});
                 
                 ArrayList<UUID> playerIdList = new ArrayList<>(playerStrIdList.stream()
-                                                                .map(UUID::fromString)
-                                                                .collect(Collectors.toList()));
+                                                    .map(UUID::fromString)
+                                                    .collect(Collectors.toList()));
                 return playerIdList;
             }
         } catch (IOException e) {
@@ -206,6 +212,7 @@ public class RedisPenteGameStore {
         String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
 
         ArrayList<UUID> currPlayers = getPlayersInGame(jedis, gameId);
+
         currPlayers.add(playerId);
 
         try {
@@ -288,6 +295,7 @@ public class RedisPenteGameStore {
 
         // use ordering of player id's to deterimine which index to iterate
         ArrayList<UUID> playerIds = getPlayersInGame(jedis, gameId);
+
         int playerIndex = playerIds.indexOf(playerId);
 
         if (playerIndex >= captures.size()) {
@@ -348,7 +356,7 @@ public class RedisPenteGameStore {
 
     public static PenteBoardIdentifierEnum getPlayerGameNum(Jedis jedis, UUID gameId, UUID playerId) {
         // get player number via player list index 
-        ArrayList<UUID> playerIds = getPlayersInGame(jedis, gameId);
+        ArrayList<UUID> playerIds =  getPlayersInGame(jedis, gameId);
         int playerNumberEnumIndex = playerIds.indexOf(playerId) + 1; // player number = index + 1
 
         if (PenteBoardIdentifierEnum.values().length > playerNumberEnumIndex) {
@@ -357,7 +365,22 @@ public class RedisPenteGameStore {
         return PenteBoardIdentifierEnum.values()[playerNumberEnumIndex];
     }
  
+    public static Integer getGameTurnCounter(Jedis jedis, UUID gameId) {
+        String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+        
+        String serializedCurrBoardState = jedis.hget(SPECIFIED_GAME_PREFIX, "turnCounter");
 
+        try {
+            if (serializedCurrBoardState != null) {
+                Integer turnCounter = mapper.readValue(serializedCurrBoardState, new TypeReference<Integer>() {});
+                
+                return turnCounter;
+            }
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+        return null;
+    } 
 
     public static void addToPenteGameLog(Jedis jedis, UUID gameId, String log) {
         

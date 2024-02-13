@@ -1,4 +1,4 @@
-package com.mycompany.app.WebServer.WebServlets;
+package com.mycompany.app.WebServer.WebServlets.Pente;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,6 +18,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Collections;
+import java.util.Collection;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,12 +32,13 @@ import com.mycompany.app.Game.Pente.PenteBoardIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.Game.Pente.PenteGameSettings;
 import com.mycompany.app.Game.Pente.PenteTurn;
-import com.mycompany.app.WebServer.EndpointHelperFunctions;
 import com.mycompany.app.WebServer.RedisConnectionManager;
 import com.mycompany.app.WebServer.UuidValidator;
 import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
+import com.mycompany.app.WebServer.Models.PenteGameEvent;
 import com.mycompany.app.WebServer.Models.GameServerInfo.GameRunState;
+import com.mycompany.app.WebServer.WebServlets.EndpointHelperFunctions;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -42,16 +49,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 
 /**
  * A Servlet for handling all requests to /pente-game/*
  * @author cole
  * 
+ * <br>
  * Comprehensive list of endpoints:
  * <p><ul>
  * <li> GET gameserver/pente-game/list/head - list of all current game's header info
  * <li> GET gameserver/pente-game/{game-id}/head - get game's header info corresponding to game id
  * <li> GET gameserver/pente-game/{game-id}/board - get game's board state corresponding to game id
+ * <li> GET gameserver/pente-game/{game-id}/players - get game's information regarding player join status
+ * <li> GET gameserver/pente-game/{game-id}/sse-connect - get sse connection to game session
+ * <li> GET gameserver/pente-game/{game-id}/turn-counter - get a games turn counter
  * 
  * <li> POST gameserver/pente-game/create - create a new pente game 
  *          - creator-id (UUID)
@@ -96,7 +109,9 @@ public class PenteGameEndpointHandler extends HttpServlet {
         getlistGameHeaders,
         getSpecificGameHeader,
         getSpecificGameBoard,
-        getConnectionToGame,
+        getSSEConnectionToGame,
+        getPlayersInGame,
+        getTurnCounter,
 
         // post endpoints
         postCreateGame,
@@ -109,10 +124,13 @@ public class PenteGameEndpointHandler extends HttpServlet {
 
 
 
-    // public Jedis cache;
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    private static final Logger logger = LoggerFactory.getLogger(PenteGameEndpointHandler.class);
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    private final String REDIS_BROADCAST_CHANNEL_TEMPLATE = "penteGame:%s:broadcast";
 
 
     public PenteGameEndpointHandler() {
@@ -132,37 +150,38 @@ public class PenteGameEndpointHandler extends HttpServlet {
     private void handleGetListGameHeaders(HttpServletRequest req, HttpServletResponse resp)  {
         ServletContext context = req.getServletContext();
         RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        Set<String> serializedGameHeaders = new HashSet<>();;
 
+        // abort if null cache
         if (cacheManager == null) {
             System.err.println("Missing cache manager connection pool");
             return;
         }
 
+        // extract data from redis, convert to string for send back to client
         try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
             Set<GameServerInfo> gameHeaders = RedisPenteGameStore.getPenteGameHeaders(jedis);
-            Set<String> serializedGameHeaders = new HashSet<>();
 
             try {
                 for (GameServerInfo gameHeader : gameHeaders) {
                     serializedGameHeaders.add(mapper.writeValueAsString(gameHeader));
                 }
-                // return "";
             } catch (JsonProcessingException e) {
-                // return buildInternalServerProcessingError(); 
                 e.printStackTrace();
             }
+        }
 
-            try {
-                resp.setStatus(HttpServletResponse.SC_OK);
-                resp.setHeader("Location", "/gameserver/pente-game/list/head");
-                resp.setContentType("application/json");
-                resp.getWriter().write("{\"gameHeaders\": " + serializedGameHeaders + "}");
-            } catch (IOException e) {
-                // TODO: handle exception
-                System.err.println("Couldn't respond to request due to IOException");
-                e.printStackTrace();
-            }
-        } 
+        // construct success message return to client
+        try {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setHeader("Location", "/gameserver/pente-game/list/head");
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"gameHeaders\": " + serializedGameHeaders + "}");
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.err.println("Couldn't respond to request due to IOException");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -211,24 +230,157 @@ public class PenteGameEndpointHandler extends HttpServlet {
         return "";
     }
 
-    private String handleGetGameConnection(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+    /**
+     * Get game's information regarding player join status
+     * e.g. GET gameserver/pente-game/{game-id}/players
+     * @param req
+     * @param resp
+     * @param gameId
+     */
+    private void handleGetPlayersInGameByGameId(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        Set<String> serializedPlayerIds = new HashSet<>();;
+
+        // abort if null cache
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        // extract data from redis, convert to string for send back to client
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            ArrayList<UUID> playerIds = RedisPenteGameStore.getPlayersInGame(jedis, gameId);
+
+            try {
+                for (UUID playerId : playerIds) {
+                    serializedPlayerIds.add(mapper.writeValueAsString(playerId));
+                }
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // construct success message return to client
+        try {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setHeader("Location", "/gameserver/pente-game/{game-id}/players");
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"playerIds\": " + serializedPlayerIds + "}");
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.err.println("Couldn't respond to request due to IOException");
+            e.printStackTrace();
+        }
+    } 
+
+    private void handleGetTurnCounter(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        String serializedTurnCounter = null;
+
+        // abort if null cache
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        // extract data from redis, convert to string for send back to client
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            Integer turnCounter = RedisPenteGameStore.getGameTurnCounter(jedis, gameId);
+
+            serializedTurnCounter = String.valueOf(turnCounter);
+        }
+
+        // construct success message return to client
+        try {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setHeader("Location", "/gameserver/pente-game/{game-id}/turnCounter");
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"turnCounter\": " + serializedTurnCounter + "}");
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.err.println("Couldn't respond to request due to IOException");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Get endpoint used for establishing an sse connection
+     * e.g. GET gameserver/pente-game/{game-id}/sse-connect 
+     * @param req
+     * @param resp
+     * @param gameId
+     */
+    private void handleGetGameConnection(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+        List<String> events = Collections.synchronizedList(new ArrayList<String>());
+
+        // Set content type to text/event-stream
         resp.setContentType("text/event-stream");
         resp.setCharacterEncoding("UTF-8");
         resp.setHeader("Cache-Control", "no-cache");
         resp.setHeader("Connection", "keep-alive");
 
-        try {
-            final PrintWriter writer = resp.getWriter();
 
-            // Send a dummy event every second for demonstration purposes
-            scheduler.scheduleAtFixedRate(() -> {
-                writer.write("data: {\"message\": \"This is a server-sent event.\"}\n\n");
-                writer.flush();
-            }, 0, 1, TimeUnit.SECONDS);
+        Thread subscriptionThread = new Thread(() -> {
+            try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+                String channelName = String.format(REDIS_BROADCAST_CHANNEL_TEMPLATE, gameId.toString());
+                System.out.println("Subscribing to channel: " + channelName);
+                
+                jedis.subscribe(new JedisPubSub() {
+                    @Override
+                    public void onMessage(String channel, String message) {
+                        events.add(message);
+                    }
+                }, channelName);
+            } 
+        });
+        subscriptionThread.start();
+        
+        // block endpoint thread to sustain connection
+        //   respond to incoming events relevant to game listening to triggered by other endpoint requests
+        try (PrintWriter writer = resp.getWriter()) {
+            System.out.println("Response writer grabbed.");
+            writer.write("connected");
+            writer.flush();
+            
+            while (!Thread.interrupted()) {
+                try {
+                    if (events.size() > 0) {
+                        String eventStr = events.remove(0);
+                        PenteGameEvent event = EndpointHelperFunctions.parseGameEvent(eventStr);
+
+                        /*
+                         * EVENT MESSAGE FORMAT:
+                         *      id: <num>
+                         *      event: <event_name>
+                         *      data: <json_data>
+                         * \n
+                         */
+
+                        if (event != null) {
+                            writer.write(String.format("id: %s\n", event.getEventId().toString()));
+                            writer.write(String.format("event: %s\n", event.getEvent().toString()));
+                            writer.write(String.format("data: %s\n", event.getData().asText()));
+                            writer.write("\n");
+                            writer.flush();
+                        }
+                    }
+
+                    Thread.sleep(1000); 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
+                }
+            }
+            
+            // Close the writer and release resources
+            writer.close();
         } catch (Exception e) {
             // TODO: handle exception
         }
-        return "";
     }
 
     // --------------------------------------------------------------------------------
@@ -256,10 +408,9 @@ public class PenteGameEndpointHandler extends HttpServlet {
             String gameName;
             UUID creatorId; 
             LocalDateTime nowTime = LocalDateTime.now();
-
-            System.out.println("creatorId: " + req.getParameter("creatorId"));
         
             JsonNode postDataContent = EndpointHelperFunctions.getPostRequestBody(req);
+            System.out.println("Post data: " + postDataContent.toString());
 
             try {
                 creatorId = UUID.fromString(postDataContent.get("creatorId").asText());
@@ -286,7 +437,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 resp.setStatus(HttpServletResponse.SC_CREATED);
                 resp.setHeader("Location", "/gameserver/pente-game/create");
                 resp.setContentType("application/json");
-                resp.getWriter().write("{\"message\": \"Resource created successfully\"}");
+                resp.getWriter().write("{\"gameId\": \"" + gameUuid + "\", \"creationTime\": \"" + nowTime.toString() + "\"}");
             } catch (IOException e) {
                 // TODO: handle exception
                 System.err.println("Couldn't respond to request due to IOException");
@@ -294,20 +445,6 @@ public class PenteGameEndpointHandler extends HttpServlet {
             }
 
         }
-        
-        // // write new game data to redis 
-        // try (Jedis jedisInst = new Jedis("localhost", 6379)) {
-        //     ObjectMapper mapper = new ObjectMapper();
-        //     String jsonStringGameModel = mapper.writer().writeValueAsString(gameModel);
-
-        //     jedisInst.hset("pente-game", gameUuid.toString(), jsonStringGameModel);
-        // } catch (Exception e) {
-        //     // TODO: handle exception
-        //     System.out.println("error");
-        //     return;
-        // }
-
-        // return build201SuccessfulPostMessage();
     }
 
     /**
@@ -316,7 +453,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param gameId
      * @param settings
      */
-    private void handlePostGameSettings(UUID gameId, PenteGameSettings settings) {
+    private void handlePostGameSettings(HttpServletRequest req, HttpServletResponse resp, UUID gameId, PenteGameSettings settings) {
 
     }
 
@@ -326,7 +463,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param gameId
      * @param timeStamp
      */
-    private void handlePostStartGame(UUID gameId, Date timeStamp) {
+    private void handlePostStartGame(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
 
     } 
 
@@ -344,7 +481,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param timestamp
      * @param move
      */
-    private void handlePostGameMove(UUID gameId, Date timestamp, PenteTurn move) {
+    private void handlePostGameMove(HttpServletRequest req, HttpServletResponse resp, UUID gameId, PenteTurn move) {
         // playing a move will post move data to the server 
 
         // use sse's to stream game changes back to the player 
@@ -358,19 +495,72 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param playerId
      * @param timestamp
      */
-    private void handlePostLeaveGame(UUID gameId, UUID playerId, Date timestamp) {
+    private void handlePostLeaveGame(HttpServletRequest req, HttpServletResponse resp, UUID gameId, UUID playerId) {
 
     }
 
     /**
-     * have a player join a game, establishes an long running SSE stream 
+     * have a player join a game
      * e.g. POST gameserver/pente-game/join
      * @param gameId
      * @param playerId
      * @param timestamp
      */
-    private void handlePostJoinGame(UUID gameId, UUID playerId, Date timestamp) {
+    private void handlePostJoinGame(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
 
+        UUID playerId = null;
+        LocalDateTime nowTime = null;
+
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            // parse data from req
+            // UUID creatorId, Date timestamp
+            nowTime = LocalDateTime.now();
+        
+            JsonNode postDataContent = EndpointHelperFunctions.getPostRequestBody(req);
+            System.out.println("Post data: " + postDataContent.toString());
+
+            try {
+                playerId = UUID.fromString(postDataContent.get("playerId").asText());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Warning: invalid argument uuid passed.");
+                send400BadRequest(resp);
+                return;
+            }
+
+            RedisPenteGameStore.addPlayerToGame(jedis, gameId, playerId);
+            System.out.println("New player resource added to redis");
+        } 
+
+        if (playerId == null || nowTime == null) {
+            return;
+        }
+        // from here we know the player has been created successfully
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()){
+            PenteGameEvent event = new PenteGameEvent(
+                UUID.randomUUID(), 
+                PenteGameEvent.PenteGameEventType.PlayerJoin, 
+                null);
+            jedis.publish("penteGame:" + gameId + ":broadcast", event.toJsonString());
+            System.out.println("Player join event pushed to pub/sub: " + "penteGame:" + gameId + ":broadcast");
+        }
+
+        try {
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            resp.setHeader("Location", "/gameserver/pente-game/join");
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"gameId\": \"" + gameId.toString() + "\", \"timeJoinedAt\": " + nowTime.toString() + "}");
+        } catch (IOException e) {
+            // TODO: handle exception
+            System.err.println("Couldn't respond to request due to IOException");
+            e.printStackTrace();
+        }
     }
 
 
@@ -448,12 +638,10 @@ public class PenteGameEndpointHandler extends HttpServlet {
         }
 
         String firstPathElement = pathInfo.get(0);
-        System.out.println("First element: " + firstPathElement);
 
         if (UuidValidator.isValidUUID(firstPathElement)) {
-            System.out.println("First element Id match");
-            if (pathInfo.size() == 1) {
-                // prevent GET gameserver/pente-game/{game-id}
+            if (pathInfo.size() == 1 || pathInfo.size() > 2) {
+                // prevent GET gameserver/pente-game/{game-id} and GET gameserver/pente-game/{game-id}/*/*
                 return EndpointRouterResponseId.missingEndpointError;
             }
 
@@ -463,18 +651,23 @@ public class PenteGameEndpointHandler extends HttpServlet {
                     return EndpointRouterResponseId.getSpecificGameHeader;
                 case "board":
                     return EndpointRouterResponseId.getSpecificGameBoard;
+                case "players":
+                    return EndpointRouterResponseId.getPlayersInGame;
+                case "sse-connect": 
+                    return EndpointRouterResponseId.getSSEConnectionToGame;
+                case "turn-counter":
+                    return EndpointRouterResponseId.getTurnCounter;
                 default:
                     return EndpointRouterResponseId.missingEndpointError;
             }
         }
         else if (firstPathElement.equals("list")) {
             if (pathInfo.size() == 1) {
-                // prevent GET gameserver/pente-game/list
+                // prevent GET gameserver/pente-game/list and GET gameserver/pente-game/list/*/*
                 return EndpointRouterResponseId.missingEndpointError;
             }
 
             String secondPathElement = pathInfo.get(1);
-            System.out.println("Second element " + secondPathElement);
             switch (secondPathElement) {
                 case "head":
                     return EndpointRouterResponseId.getlistGameHeaders;
@@ -482,11 +675,11 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 default:
                     return EndpointRouterResponseId.missingEndpointError;
             }
+        } else {
+            // prevent non-understood endpoint path
+            System.out.println("First element not understood");
+            return EndpointRouterResponseId.missingEndpointError;
         }
-
-        // prevent non-understood endpoint path
-        System.out.println("First element not understood");
-        return EndpointRouterResponseId.missingEndpointError;
     } 
 
     public static EndpointRouterResponseId routePostEndpoints(ArrayList<String> pathInfo) {
@@ -525,25 +718,50 @@ public class PenteGameEndpointHandler extends HttpServlet {
         // prevent non-understood endpoint path
         return EndpointRouterResponseId.missingEndpointError;
     }
+
+    private void logRequestDetails(HttpServletRequest request) {
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append("[REQUEST] - ");
+        logMessage.append("Method: ").append(request.getMethod()).append(", ");
+        logMessage.append("URL: ").append(request.getRequestURL()).append(", ");
+        logMessage.append("Parameters: ").append(request.getQueryString()).append(", ");
+        logMessage.append("Headers: ");
+        request.getHeaderNames().asIterator().forEachRemaining(headerName ->
+                logMessage.append(headerName).append(": ").append(request.getHeader(headerName)).append(", "));
+        logMessage.append("Remote Address: ").append(request.getRemoteAddr());
+        System.out.println(logMessage);
+        // logger.info(logMessage.toString());
+    }
+
+    private void logResponseDetails(HttpServletResponse response) {
+        StringBuilder logMessage = new StringBuilder();
+        logMessage.append("[RESPONSE] - ");
+        logMessage.append("Status Code: ").append(response.getStatus()).append(", ");
+        logMessage.append("Headers: ");
+        for (String headerName : response.getHeaderNames()) {
+            logMessage.append(headerName).append(": ").append(response.getHeader(headerName)).append(", ");
+        }
+        System.out.println(logMessage);
+        // logger.info(logMessage.toString());
+    }
     
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        System.out.println("Get endpoint hit");
-        String jsonStringResponse = "";
+        logRequestDetails(req);
+
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));
+        UUID gameId;
 
-        System.out.println("Request recieved: " + pathInfoArrayList.toString());
-
-        // if(cache == null) {
-        //     resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-        //     resp.getWriter().println("Service Unavailable: Backend service unable to connect to Redis");
-        //     return;
-        // }
-
+        System.out.println("Request path: " + pathInfoArrayList.toString());
 
         EndpointRouterResponseId endpointResponseId = routeGetEndpoints(pathInfoArrayList);
+    
+        if (endpointResponseId != EndpointRouterResponseId.missingEndpointError) {
+            System.out.println("Routing to endpoint: \"" + endpointResponseId + "\" (" + req.getPathInfo() + ")");
+        }
+
         switch (endpointResponseId) { 
             case missingEndpointError: // non-matched endpoint
                 System.out.println("No matching path for " + pathInfoArrayList.toString());
@@ -561,50 +779,58 @@ public class PenteGameEndpointHandler extends HttpServlet {
                 break;
 
             case getSpecificGameHeader: // GET gameserver/pente-game/{game-id}/head
-                handleGetGameHeaderByGameId(req, resp, UUID.fromString(pathInfoArrayList.get(0)));
+                gameId = UUID.fromString(pathInfoArrayList.get(0)); 
+                handleGetGameHeaderByGameId(req, resp, gameId);
                 break;
 
             case getSpecificGameBoard: // GET gameserver/pente-game/{game-id}/board 
-                jsonStringResponse = handleGetGameStateByGameId(
-                    UUID.fromString(pathInfoArrayList.get(0))
-                );
+                // jsonStringResponse = handleGetGameStateByGameId(
+                //     UUID.fromString(pathInfoArrayList.get(0))
+                // );
                 break;
 
             case getlistGameHeaders: // GET gameserver/pente-game/list/head
                 handleGetListGameHeaders(req, resp);
                 break;
 
-            case getConnectionToGame: // GET gameserver/pente-game/{game-id}/sse-connection
-                jsonStringResponse = handleGetGameConnection(req, resp, UUID.randomUUID());
+            case getSSEConnectionToGame: // GET gameserver/pente-game/{game-id}/sse-connect
+                gameId = UUID.fromString(pathInfoArrayList.get(0));
+                handleGetGameConnection(req, resp, gameId);
+                break;
+
+            case getPlayersInGame: // GET gameserver/pente-game/{game-id}/players
+                gameId = UUID.fromString(pathInfoArrayList.get(0));
+                handleGetPlayersInGameByGameId(req, resp, gameId);
                 break;
         
             default:
                 break;
         }
+        logResponseDetails(resp);
     }
 
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         //   POST gameserver/pente-game/create - create a new pente game 
-        //   POST gameserver/pente-game/settings - adjust the settings of a game
-        //   POST gameserver/pente-game/start - start a new pente game 
-        //   POST gameserver/pente-game/move - post a move 
-        //   POST gameserver/pente-game/leave - have a player leave a game, ends long running SSE stream
-        //   POST gameserver/pente-game/join - have a player join a game, establishes an long running SSE stream 
+        //   POST gameserver/pente-game/{game-id}/settings - adjust the settings of a game
+        //   POST gameserver/pente-game/{game-id}/start - start a new pente game 
+        //   POST gameserver/pente-game/{game-id}/move - post a move 
+        //   POST gameserver/pente-game/{game-id}/leave - have a player leave a game, ends long running SSE stream
+        //   POST gameserver/pente-game/{game-id}/join - have a player join a game
+        logRequestDetails(req);
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));
+        UUID gameId;
 
-        System.out.println("Request recieved: " + pathInfoArrayList.toString());
-
-        // Jedis cache = connectJedisWithRetry();
-        // if(cache == null) {
-        //     resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-        //     resp.getWriter().println("Service Unavailable: Backend service unable to connect to Redis");
-        //     return;
-        // }
+        System.out.println("Request path: " + pathInfoArrayList.toString());
 
         EndpointRouterResponseId endpointResponseId = routePostEndpoints(pathInfoArrayList);
+        
+        if (endpointResponseId != EndpointRouterResponseId.missingEndpointError) {
+            System.out.println("Routing to endpoint: \"" + endpointResponseId + "\" (" + req.getPathInfo() + ")");
+        }
+
         switch (endpointResponseId) { 
             case missingEndpointError: // non-matched endpoint
                 System.out.println("No matching path for " + pathInfoArrayList.toString());
@@ -629,9 +855,10 @@ public class PenteGameEndpointHandler extends HttpServlet {
             //     jsonStringResponse = handlePostGameMove(null, null, null);
             //     break;
             
-            // case postJoinGame: // POST gameserver/pente-game/join
-            //     jsonStringResponse = handlePostJoinGame();
-            //     break;
+            case postJoinGame: // POST gameserver/pente-game/join
+                gameId = UUID.fromString(pathInfoArrayList.get(0));
+                handlePostJoinGame(req, resp, gameId);
+                break;
             // case postLeaveGame: // POST gameserver/pente-game/leave
             //     jsonStringResponse = handlePostLeaveGame(null, null, null);
             //     break;
@@ -639,6 +866,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
             default:
                 break;
         }
+        logResponseDetails(resp);
     }
 
     @Override

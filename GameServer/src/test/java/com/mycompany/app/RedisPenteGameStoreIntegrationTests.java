@@ -20,14 +20,15 @@ import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
 import com.mycompany.app.WebServer.Models.GameServerInfo.GameRunState;
-import com.mycompany.app.WebServer.WebServlets.PenteGameEndpointHandler;
+import com.mycompany.app.WebServer.WebServlets.Pente.PenteGameEndpointHandler;
 
 import redis.clients.jedis.Jedis;
 
 /**
- * This class of tests is 
+ * This class of tests contains tests relating to making sure all RedisPenteGameStore functions are able to interact with redis on a cross 
+ * service level.
  */
-public class PenteGameRedisIntegrationTests {
+public class RedisPenteGameStoreIntegrationTests {
 
     // private static final int REDIS_PORT = 6379;
     private static final int REDIS_TEST_PORT = 4000;
@@ -50,35 +51,6 @@ public class PenteGameRedisIntegrationTests {
     public void testPingAgainstActiveConnection() {
         assertTrue("PONG".equalsIgnoreCase(cache.ping()));
     }
-
-    /**
-     * Simple put and get example to demonstrate a connection with a redis instance can be established.
-     */
-    @Test
-    public void testFindingAnInsertedValue() {
-        cache.set("foo", "FOO");
-        String foundObject = cache.get("foo");
-
-        assertNotNull(foundObject);
-        assertEquals("FOO", foundObject);
-    }
-
-    /**
-     * Another simple get example on a redis instance with a non-inserted key to demonstrate connection establishment. 
-     */
-    @Test
-    public void testNotFindingAValueThatWasNotInserted() {
-        String foundObject = cache.get("bar");
-
-        assertNull(foundObject);
-    }
-
-    // @Test
-    // public void testServeletConstruction() {
-    //     PenteGameEndpointHandler handler = new PenteGameEndpointHandler();
-
-    //     assertNotNull(handler);
-    // }
 
     /**
      * Basic create and list pente games
