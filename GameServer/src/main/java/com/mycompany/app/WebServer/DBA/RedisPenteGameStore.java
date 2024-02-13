@@ -169,14 +169,14 @@ public class RedisPenteGameStore {
             String serializedBoardState = mapper.writeValueAsString(game.getGameBoard());
             jedis.hset(SPECIFIED_GAME_PREFIX, "currentBoard", serializedBoardState);
 
-            // System.out.println(String.join(
-            //     "Hash Created: {\n",
-            //     "    field \"header\": " + serializedHeader + "\n",
-            //     "    field \"players\": " + serializedPlayerIdList + "\n",
-            //     "    field \"settings\": " + serializedGameSettings + "\n",
-            //     "    field \"playerCaptures\": " + serializedPlayerCaptures + "\n",
-            //     "    field \"currentBoard\": " + serializedBoardState + "\n"
-            // ));
+            System.out.println(String.join(
+                "Hash Created: {\n",
+                "    field \"header\": " + serializedHeader + "\n",
+                "    field \"players\": " + serializedPlayerIdList + "\n",
+                "    field \"settings\": " + serializedGameSettings + "\n",
+                "    field \"playerCaptures\": " + serializedPlayerCaptures + "\n",
+                "    field \"currentBoard\": " + serializedBoardState + "\n"
+            ));
         } catch (Exception e) {
             // TODO: handle exception
         }

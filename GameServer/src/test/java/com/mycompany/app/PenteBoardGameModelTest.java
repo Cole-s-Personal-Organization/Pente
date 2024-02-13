@@ -185,7 +185,7 @@ public class PenteBoardGameModelTest {
     }
 
     @Test
-    public void cornerNInARow() {
+    public void cornerInARow() {
         PenteGameModel model = new PenteGameModel();
         PenteBoardIdentifierEnum playerNum = PenteBoardIdentifierEnum.PLAYER2;
         PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(4, 4, playerNum).build();
@@ -206,5 +206,214 @@ public class PenteBoardGameModelTest {
             Assert.fail();
         }
         assertEquals(fiveInARow, expectedValue);
+    }
+
+    @Test
+    public void basicRemoveCaptured() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(6, 7, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(7, 7, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(8, 7, player1).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(5, 7, player2).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(9, 7, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 3;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            model.removeCaptured(turn5);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(6, 7), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getGameBoardValueAtPosition(7, 7), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getGameBoardValueAtPosition(8, 7), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
+    }
+
+    @Test
+    public void cornerRemoveCaptured() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(1, 1, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(2, 2, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(3, 3, player1).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(4, 4, player2).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(0, 0, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 3;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            model.removeCaptured(turn5);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(1, 1), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getGameBoardValueAtPosition(2, 2), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getGameBoardValueAtPosition(3, 3), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
+    }
+
+    @Test
+    public void oppositeCornerRemoveCaptured() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(17, 17, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(16, 16, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(15, 15, player1).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(14, 14, player2).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(18, 18, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 3;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            model.removeCaptured(turn5);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(17, 17), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getGameBoardValueAtPosition(16, 16), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getGameBoardValueAtPosition(15, 15), PenteBoardIdentifierEnum.EMPTY);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
+    }
+
+    @Test
+    public void cornerShouldNotRemoveCaptured() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(1, 1, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(2, 2, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(3, 3, player1).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(4, 4, player1).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(0, 0, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 0;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            model.removeCaptured(turn5);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(1, 1), player1);
+        assertEquals(model.getGameBoardValueAtPosition(2, 2), player1);
+        assertEquals(model.getGameBoardValueAtPosition(3, 3), player1);
+        assertEquals(model.getGameBoardValueAtPosition(4, 4), player1);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
+    }
+
+    @Test
+    public void shouldNotRemoveBecauseEmptySpot() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(7, 7, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(8, 7, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(5, 7, player2).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(9, 7, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 0;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.removeCaptured(turn4);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(7, 7), player1);
+        assertEquals(model.getGameBoardValueAtPosition(8, 7), player1);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
+    }
+
+    @Test
+    public void shouldNotRemoveBecauseNotAdjacent() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(7, 7, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(8, 7, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(9, 7, player2).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(6, 7, player2).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(5, 7, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 0;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            model.removeCaptured(turn5);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(7, 7), player1);
+        assertEquals(model.getGameBoardValueAtPosition(8, 7), player1);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
+    }
+
+    @Test
+    public void removeMultipleCaptureDirections() {
+        PenteGameModel model = new PenteGameModel();
+        PenteBoardIdentifierEnum player1 = PenteBoardIdentifierEnum.PLAYER1;
+        PenteBoardIdentifierEnum player2 = PenteBoardIdentifierEnum.PLAYER2;
+        PenteBoardIdentifierEnum empty = PenteBoardIdentifierEnum.EMPTY;
+        PenteTurn turn1 = new PenteTurn.PenteTurnBuilder(1, 0, player1).build();
+        PenteTurn turn2 = new PenteTurn.PenteTurnBuilder(2, 0, player1).build();
+        PenteTurn turn3 = new PenteTurn.PenteTurnBuilder(3, 0, player1).build();
+        PenteTurn turn4 = new PenteTurn.PenteTurnBuilder(1, 1, player1).build();
+        PenteTurn turn5 = new PenteTurn.PenteTurnBuilder(2, 2, player1).build();
+        PenteTurn turn6 = new PenteTurn.PenteTurnBuilder(4, 0, player2).build();
+        PenteTurn turn7 = new PenteTurn.PenteTurnBuilder(3, 3, player2).build();
+        PenteTurn turn8 = new PenteTurn.PenteTurnBuilder(0, 2, player2).build();
+        int expcetedP1NumCaptured = 0;
+        int expectedP2NumCaptured = 5;
+        try {
+            model.setMove(turn1);
+            model.setMove(turn2);
+            model.setMove(turn3);
+            model.setMove(turn4);
+            model.setMove(turn5);
+            model.setMove(turn6);
+            model.setMove(turn7);
+            model.setMove(turn8);
+            model.removeCaptured(turn8);
+        } catch (Exception e) {
+            Assert.fail();
+        }
+        assertEquals(model.getGameBoardValueAtPosition(1, 0), empty);
+        assertEquals(model.getGameBoardValueAtPosition(2, 0), empty);
+        assertEquals(model.getGameBoardValueAtPosition(3, 0), empty);
+        assertEquals(model.getGameBoardValueAtPosition(1, 1), empty);
+        assertEquals(model.getGameBoardValueAtPosition(2, 2), empty);
+        assertEquals(model.getPlayerCaptures()[0].intValue(), expcetedP1NumCaptured);
+        assertEquals(model.getPlayerCaptures()[1].intValue(), expectedP2NumCaptured);
     }
 }
