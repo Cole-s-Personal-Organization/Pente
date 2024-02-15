@@ -176,6 +176,8 @@ public class PenteGameEndpointHandler extends HttpServlet {
         // construct success message return to client
         try {
             resp.setStatus(HttpServletResponse.SC_OK);
+            // TODO: here for testing purposes, this is bad, must use least access principle
+            resp.setHeader("Access-Control-Allow-Origin", "*");
             resp.setHeader("Location", "/gameserver/pente-game/list/head");
             resp.setContentType("application/json");
             resp.getWriter().write("{\"gameHeaders\": " + serializedGameHeaders + "}");
@@ -852,7 +854,7 @@ public class PenteGameEndpointHandler extends HttpServlet {
     
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {        
         logRequestDetails(req);
 
         String[] pathInfoList = req.getPathInfo().split("/");
@@ -933,6 +935,10 @@ public class PenteGameEndpointHandler extends HttpServlet {
         //   POST gameserver/pente-game/{game-id}/move - post a move 
         //   POST gameserver/pente-game/{game-id}/leave - have a player leave a game, ends long running SSE stream
         //   POST gameserver/pente-game/{game-id}/join - have a player join a game
+
+        // TODO: here for testing purposes, this is bad, must use least access principle
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+
         logRequestDetails(req);
         String[] pathInfoList = req.getPathInfo().split("/");
         ArrayList<String> pathInfoArrayList = new ArrayList<>(Arrays.asList(pathInfoList).subList(1, pathInfoList.length));

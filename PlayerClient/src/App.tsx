@@ -4,19 +4,10 @@ import MainPage from './pages/MainPage';
 import WelcomePage from './pages/WelcomePage';
 import ChatAndCommandFrame from './pages/components/chatAndCommandFrameElements/ChatAndCommandFrame';
 import WebsocketEchoButton from './pages/components/WebsocketEchoButton';
+import GameLobbies from './pages/GameLobbies';
 
 function App() {
   console.log("App Rendered");
-  
-  const [isConnectedToServer, setIsConnectedToServer] = useState<boolean>(false);
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-
-
-  useEffect(() => {
-    console.log("App useEffect Triggered");
-    
-    setSessionStartTime(new Date());
-  }, [isConnectedToServer])
 
   // return (
   //   <>
@@ -31,8 +22,7 @@ function App() {
   // )
 
   return (
-    // <ChatAndCommandFrame username='cole'/>
-    <WebsocketEchoButton/>
+    <GameLobbies/>
   )
 }
 

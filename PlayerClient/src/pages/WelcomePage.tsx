@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import React, { useState } from 'react';
 
 interface WelcomePageProps {
-    setIsConnectedToServer: React.Dispatch<React.SetStateAction<boolean>>;
+  
 }
 
-const WelcomePage: React.FC<WelcomePageProps> = ({setIsConnectedToServer}) => {
+const WelcomePage: React.FC<WelcomePageProps> = () => {
   const [connecting, setConnecting] = useState(false);
 
   const handleConnectClick = () => {
