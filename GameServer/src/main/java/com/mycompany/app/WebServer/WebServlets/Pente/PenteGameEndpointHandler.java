@@ -502,7 +502,44 @@ public class PenteGameEndpointHandler extends HttpServlet {
      * @param timeStamp
      */
     private void handlePostStartGame(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
 
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            LocalDateTime nowTime = LocalDateTime.now();
+        
+            JsonNode postDataContent = EndpointHelperFunctions.getPostRequestBody(req);
+            System.out.println("Post data: " + postDataContent.toString());
+
+
+            RedisPenteGameStore.setGameRunState(jedis, gameId, GameRunState.Running);
+            GameServerInfo newHeader = RedisPenteGameStore.getPenteGameHeaderByGameId(jedis, gameId);
+            String serializedNewGameHeader = "";
+
+            try {
+                serializedNewGameHeader = mapper.writeValueAsString(newHeader);
+            } catch (JsonProcessingException e) {
+                // TODO: handle exception
+                System.err.println("Couldn't respond to request due to IOException");
+                e.printStackTrace();
+            } 
+
+            try {
+                resp.setStatus(HttpServletResponse.SC_CREATED);
+                resp.setHeader("Location", "/gameserver/pente-game/create");
+                resp.setContentType("application/json");
+                resp.getWriter().write("{\"gameHeader\": \"" + serializedNewGameHeader + "}");
+            } catch (IOException e) {
+                // TODO: handle exception
+                System.err.println("Couldn't respond to request due to IOException");
+                e.printStackTrace();
+            }
+        }
     } 
 
     //     <li> POST gameserver/pente-game/move - post a move 

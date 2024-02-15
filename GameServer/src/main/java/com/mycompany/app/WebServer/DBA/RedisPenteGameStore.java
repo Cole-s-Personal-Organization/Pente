@@ -139,9 +139,14 @@ public class RedisPenteGameStore {
         return header;
     }
 
-    // public static void getPenteGameHeaderByGameId(Jedis jedis, UUID gameId) {
-    //     String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
-    // }
+    public static void setPenteGameHeaderByGameId(Jedis jedis, UUID gameId, GameServerInfo header) {
+        try {
+            String serializedHeader = mapper.writeValueAsString(header);
+            jedis.sadd(GAME_HEADERS_PREFIX, serializedHeader);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
 
     public static void createPenteGame(Jedis jedis, GameServerInfo header, PenteGameModel game) {
         try {
@@ -355,6 +360,12 @@ public class RedisPenteGameStore {
         }
 
         return winner;
+    }
+
+    public static void setGameRunState(Jedis jedis, UUID gameId, GameRunState state) {
+        GameServerInfo header = getPenteGameHeaderByGameId(jedis, gameId);
+        header.setRunState(state);
+        setPenteGameHeaderByGameId(jedis, gameId, header);
     }
 
     public static void setMoveToBoardStateByGameId(Jedis jedis, UUID gameId, PenteTurn turn) {
