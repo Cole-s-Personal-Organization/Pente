@@ -18,7 +18,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("head");
 
-        assertEquals(EndpointRouterResponseId.getSpecificGameHeader, PenteGameEndpointHandler.routeGetEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.getSpecificGameHeaderByGameId, PenteGameEndpointHandler.routeGetEndpoints(pathInfo));
     }
 
     @Test
@@ -28,7 +28,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("board");
 
-        assertEquals(EndpointRouterResponseId.getSpecificGameBoard, PenteGameEndpointHandler.routeGetEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.getSpecificGameBoardByGameId, PenteGameEndpointHandler.routeGetEndpoints(pathInfo));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("settings");
 
-        assertEquals(EndpointRouterResponseId.postGameSettings, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.postGameSettingsByGameId, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
     }
 
     @Test
@@ -89,7 +89,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("start");
 
-        assertEquals(EndpointRouterResponseId.postGameStart, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.postGameStartByGameId, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
     }
 
     @Test
@@ -99,7 +99,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("move");
 
-        assertEquals(EndpointRouterResponseId.postGameMove, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.postGameMoveByGameId, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("leave");
 
-        assertEquals(EndpointRouterResponseId.postLeaveGame, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.postLeaveGameByGameId, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
     }
 
     @Test
@@ -119,7 +119,7 @@ public class PenteGameEndpointRoutingTest {
         pathInfo.add(validUuid);
         pathInfo.add("join");
 
-        assertEquals(EndpointRouterResponseId.postJoinGame, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
+        assertEquals(EndpointRouterResponseId.postJoinGameByGameId, PenteGameEndpointHandler.routePostEndpoints(pathInfo));
     }
 
     @Test

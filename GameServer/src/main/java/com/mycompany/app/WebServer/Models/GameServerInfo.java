@@ -19,14 +19,14 @@ public class GameServerInfo {
 
     private UUID gameId;
     private String lobbyName;
-    private UUID gameCreator; 
+    private UUID gameHost; 
     private String timeCreatedAt;
     private GameRunState runState;
 
-    public GameServerInfo(UUID gameId, String lobbyName, UUID gameCreator, String timeCreatedAt, GameRunState runState) {
+    public GameServerInfo(UUID gameId, String lobbyName, UUID gameHost, String timeCreatedAt, GameRunState runState) {
         this.gameId = gameId;
         this.lobbyName = lobbyName;
-        this.gameCreator = gameCreator;
+        this.gameHost = gameHost;
         this.timeCreatedAt = timeCreatedAt;
         this.runState = runState;
     }
@@ -42,11 +42,11 @@ public class GameServerInfo {
     public void setLobbyName(String lobbyName) {
         this.lobbyName = lobbyName;
     }
-    public UUID getGameCreator() {
-        return gameCreator;
+    public UUID getGameHost() {
+        return gameHost;
     }
-    public void setGameCreator(UUID gameCreator) {
-        this.gameCreator = gameCreator;
+    public void setGameHost(UUID gameHost) {
+        this.gameHost = gameHost;
     }
     public String getTimeCreatedAt() {
         return timeCreatedAt;

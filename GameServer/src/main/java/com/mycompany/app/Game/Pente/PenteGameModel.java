@@ -250,69 +250,72 @@ public class PenteGameModel {
     public Integer[] getPlayerCaptures() {
         return playerCaptures;
     }
+    public PenteBoardIdentifierEnum getWinner() {
+        return winner;
+    }
 
     /**
      * Prints a formated version of the board
      */
-    // @Override
-    // public String toString() {
-    //     String buildString = "";
+    @Override
+    public String toString() {
+        String buildString = "";
 
-    //     // initial catch for any error causing cases
-    //     if (this.gameBoard == null || this.gameBoard.length <= 0) {
-    //         return buildString;
-    //     }
+        // initial catch for any error causing cases
+        if (this.gameBoard == null || this.gameBoard.length <= 0) {
+            return buildString;
+        }
 
-    //     String indent = "   "; // amount of indent to use to allow space for left side row labeling
+        String indent = "   "; // amount of indent to use to allow space for left side row labeling
 
-    //     char[] colLetters = new char[this.gameBoard[0].length];
-    //     for (int i = 0; i < this.gameBoard[0].length; i++) {
-    //         colLetters[i] = (char)(97 + i);
-    //     }
+        char[] colLetters = new char[this.gameBoard[0].length];
+        for (int i = 0; i < this.gameBoard[0].length; i++) {
+            colLetters[i] = (char)(97 + i);
+        }
 
 
-    //     buildString = buildString // col identifier letters
-    //     .concat(indent)
-    //     .concat("  ") // center the letters above each col
-    //     .concat(
-    //         Arrays.toString(colLetters)
-    //             .replace(",", "  ")
-    //             .replace("[", " ")
-    //             .replace("]", "")
-    //             .trim()
-    //             .concat("\n")
-    //     );
+        buildString = buildString // col identifier letters
+        .concat(indent)
+        .concat("  ") // center the letters above each col
+        .concat(
+            Arrays.toString(colLetters)
+                .replace(",", "  ")
+                .replace("[", " ")
+                .replace("]", "")
+                .trim()
+                .concat("\n")
+        );
 
-    //     for (int i = 0; i < colLetters.length; i++) {
-    //         PenteBoardIdentifierEnum[] row = this.gameBoard[i];
+        for (int i = 0; i < colLetters.length; i++) {
+            PenteBoardIdentifierEnum[] row = this.gameBoard[i];
 
-    //         buildString = buildString // the dashed line above each row
-    //             .concat(indent)
-    //             .concat("----".repeat(row.length)
-    //                 .concat("-"))
-    //             .concat("\n");
+            buildString = buildString // the dashed line above each row
+                .concat(indent)
+                .concat("----".repeat(row.length)
+                    .concat("-"))
+                .concat("\n");
 
-    //         buildString = buildString  // initial row identifier
-    //             .concat(String.valueOf(i))
-    //             .concat(indent.substring(String.valueOf(i).length()));
+            buildString = buildString  // initial row identifier
+                .concat(String.valueOf(i))
+                .concat(indent.substring(String.valueOf(i).length()));
 
-    //         for (PenteBoardIdentifierEnum rowValue : row) { // the numbers and their dividers
-    //             buildString = buildString
-    //                 .concat("| ")
-    //                 .concat(String.valueOf(rowValue))
-    //                 .concat(" ");
-    //         }
+            for (PenteBoardIdentifierEnum rowValue : row) { // the numbers and their dividers
+                buildString = buildString
+                    .concat("| ")
+                    .concat(String.valueOf(rowValue))
+                    .concat(" ");
+            }
 
-    //         buildString = buildString // end divider
-    //             .concat("|\n");
-    //     }
-    //     buildString = buildString // the dashed line above each row
-    //             .concat(indent)
-    //             .concat("----".repeat(this.gameBoard[0].length)
-    //                 .concat("-"))
-    //             .concat("\n");
-    //     return buildString;
-    // }
+            buildString = buildString // end divider
+                .concat("|\n");
+        }
+        buildString = buildString // the dashed line above each row
+                .concat(indent)
+                .concat("----".repeat(this.gameBoard[0].length)
+                    .concat("-"))
+                .concat("\n");
+        return buildString;
+    }
 
     public class InvalidTurnException extends Exception {
         public InvalidTurnException(String e) {

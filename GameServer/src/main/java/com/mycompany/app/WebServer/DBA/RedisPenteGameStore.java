@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.mycompany.app.Game.Pente.PenteBoardIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.Game.Pente.PenteGameSettings;
+import com.mycompany.app.Game.Pente.PentePlayerIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteTurn;
 import com.mycompany.app.WebServer.UuidValidator;
 import com.mycompany.app.WebServer.Models.GameServerInfo;
@@ -175,14 +176,19 @@ public class RedisPenteGameStore {
             String serailizedTurnCounter = String.valueOf(0);
             jedis.hset(SPECIFIED_GAME_PREFIX, "turnCounter", serailizedTurnCounter);
 
-            // System.out.println(String.join(
-            //     "Hash Created: {\n",
-            //     "    field \"header\": " + serializedHeader + "\n",
-            //     "    field \"players\": " + serializedPlayerIdList + "\n",
-            //     "    field \"settings\": " + serializedGameSettings + "\n",
-            //     "    field \"playerCaptures\": " + serializedPlayerCaptures + "\n",
-            //     "    field \"currentBoard\": " + serializedBoardState + "\n"
-            // ));
+            // insert game winner value - game identifier
+            String serializedGameWinner = mapper.writeValueAsString(game.getWinner());
+            jedis.hset(SPECIFIED_GAME_PREFIX, "winner", serializedGameWinner);
+
+            System.out.println(String.join(
+                "Hash Created: {\n",
+                "    field \"header\": " + serializedHeader + "\n",
+                "    field \"players\": " + serializedPlayerIdList + "\n",
+                "    field \"settings\": " + serializedGameSettings + "\n",
+                "    field \"playerCaptures\": " + serializedPlayerCaptures + "\n",
+                "    field \"currentBoard\": " + serializedBoardState + "\n",
+                "    field \"winner\": " + serializedGameWinner + "\n" 
+            ));
         } catch (Exception e) {
             // TODO: handle exception
         }
@@ -312,14 +318,14 @@ public class RedisPenteGameStore {
         }
     }
 
-    public static Integer[][] getBoardStateByGameId(Jedis jedis, UUID gameId) {
+    public static PenteBoardIdentifierEnum[][] getBoardStateByGameId(Jedis jedis, UUID gameId) {
         String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
         
         String serializedCurrBoardState = jedis.hget(SPECIFIED_GAME_PREFIX, "currentBoard");
 
         try {
             if (serializedCurrBoardState != null) {
-                Integer[][] boardState = mapper.readValue(serializedCurrBoardState, new TypeReference<Integer[][]>() {});
+                PenteBoardIdentifierEnum[][] boardState = mapper.readValue(serializedCurrBoardState, new TypeReference<PenteBoardIdentifierEnum[][]>() {});
                 
                 return boardState;
             }
@@ -328,6 +334,28 @@ public class RedisPenteGameStore {
         }
         return null;
     }   
+
+    /**
+     * Gets the winner of a game, if there is no winner return null
+     * @param jedis Jedis Instance
+     * @param gameId Game UUID
+     * @return PentePlayerIdentifierEnum or null 
+     */
+    public static PentePlayerIdentifierEnum getGameWinner(Jedis jedis, UUID gameId) {
+        String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
+        
+        String serializedWinner = jedis.hget(SPECIFIED_GAME_PREFIX, "winner");
+
+        PentePlayerIdentifierEnum winner = null;
+
+        try {
+            winner = PentePlayerIdentifierEnum.valueOf(serializedWinner);
+        } catch (Exception e) {
+            winner = null;
+        }
+
+        return winner;
+    }
 
     public static void setMoveToBoardStateByGameId(Jedis jedis, UUID gameId, PenteTurn turn) {
         // String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
