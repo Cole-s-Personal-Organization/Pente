@@ -12,7 +12,7 @@ public class PenteTurn {
     // required
     private final int posX;
     private final int posY;
-    private final PenteBoardIdentifierEnum playerNumber;
+    private final PentePlayerIdentifierEnum playerNumber;
 
     // optional
     public final Boolean isTurnOneAction;
@@ -33,7 +33,7 @@ public class PenteTurn {
         return posY;
     }
 
-    public PenteBoardIdentifierEnum getPlayerNumber() {
+    public PentePlayerIdentifierEnum getPlayerNumber() {
         return playerNumber;
     }
 
@@ -51,12 +51,12 @@ public class PenteTurn {
         // required
         private int posX;
         private int posY;
-        private PenteBoardIdentifierEnum playerNumber;
+        private PentePlayerIdentifierEnum playerNumber;
 
         // optional
         private boolean isTurnOneAction;
 
-        public PenteTurnBuilder(int posX, int posY, PenteBoardIdentifierEnum playerNumber) {
+        public PenteTurnBuilder(int posX, int posY, PentePlayerIdentifierEnum playerNumber) {
             this.posX = posX;
             this.posY = posY;
             this.playerNumber = playerNumber;

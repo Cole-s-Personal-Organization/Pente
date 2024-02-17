@@ -28,11 +28,13 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mycompany.app.Game.Pente.PenteBoardIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteGameModel;
 import com.mycompany.app.Game.Pente.PenteGameSettings;
 import com.mycompany.app.Game.Pente.PentePlayerIdentifierEnum;
 import com.mycompany.app.Game.Pente.PenteTurn;
+import com.mycompany.app.Game.Pente.PenteGameModel.InvalidTurnException;
 import com.mycompany.app.WebServer.RedisConnectionManager;
 import com.mycompany.app.WebServer.UuidValidator;
 import com.mycompany.app.WebServer.DBA.RedisPenteGameStore;
@@ -553,16 +555,90 @@ public class PenteGameEndpointHandler extends HttpServlet {
     //  *              yPos (int)}
     /**
      * post a move to a started game
-     * e.g. POST gameserver/pente-game/move 
+     * e.g. POST gameserver/pente-game/{game-id}/move 
      * @param gameId
-     * @param timestamp
-     * @param move
      */
-    private void handlePostGameMove(HttpServletRequest req, HttpServletResponse resp, UUID gameId, PenteTurn move) {
+    private void handlePostGameMove(HttpServletRequest req, HttpServletResponse resp, UUID gameId) {
         // playing a move will post move data to the server 
 
         // use sse's to stream game changes back to the player 
         // once it is the players turn again end stream
+        ServletContext context = req.getServletContext();
+        RedisConnectionManager cacheManager =  (RedisConnectionManager) context.getAttribute("cacheManager");
+
+        if (cacheManager == null) {
+            System.err.println("Missing cache manager connection pool");
+            return;
+        }
+
+        try (Jedis jedis = cacheManager.getJedisPool().getResource()) {
+            LocalDateTime nowTime = LocalDateTime.now();
+
+            GameServerInfo header = RedisPenteGameStore.getPenteGameHeaderByGameId(jedis, gameId);
+            if (header == null) {
+                send404NotFoundError(resp, "Post Game Move Failed. Game not found.");
+                return;
+            }
+            if (header.getRunState() != GameRunState.Running) {
+                send409ConflictError(resp, "Post Game Move Failed. Game Not Running");
+                return;
+            }
+
+            JsonNode postDataContent = EndpointHelperFunctions.getPostRequestBody(req);
+            System.out.println("Post data: " + postDataContent.toString());
+
+            PenteGameModel game = RedisPenteGameStore.getPenteGameModel(jedis, gameId);
+
+            Integer posX = postDataContent.get("posX").asInt();
+            Integer posY = postDataContent.get("posY").asInt();
+            PentePlayerIdentifierEnum playerBoardIdentifier = PentePlayerIdentifierEnum.valueOf(postDataContent.get("playerNumber").asText());
+            
+            if (posX == null || posY == null || playerBoardIdentifier == null) {
+                send400BadRequest(resp);
+                return;
+            }
+            
+            PenteTurn move = new PenteTurn.PenteTurnBuilder(posX, posY, playerBoardIdentifier).build();
+
+            try {
+                game.setMove(move); 
+            } catch (InvalidTurnException e) {
+                send422SemanticError(resp, "Invalid turn data recieved.");
+                return;
+            }
+
+            String serializedMove = "";
+            try {
+                serializedMove = mapper.writeValueAsString(move);
+            } catch (JsonProcessingException e) {
+                // TODO: handle exception
+                System.err.println("Couldn't respond to request due to IOException");
+                e.printStackTrace();
+            } 
+
+            // check for winner
+            Boolean winByCaptures = game.checkCaptureWinCon(move);
+            Boolean winByInARow = game.checkConsecutiveWinCon(move);
+
+            ObjectNode responseData = mapper.createObjectNode();
+            responseData.put("move", serializedMove);
+
+            if (winByCaptures || winByInARow) {
+                // construct win message 
+                ObjectNode winData = mapper.createObjectNode();
+                responseData.put("winner", winData)
+            }
+            try {
+                resp.setStatus(HttpServletResponse.SC_CREATED);
+                resp.setHeader("Location", "/gameserver/pente-game/" + gameId + "/move");
+                resp.setContentType("application/json");
+                resp.getWriter().write(mapper.writeValueAsString(responseData));
+            } catch (IOException e) {
+                // TODO: handle exception
+                System.err.println("Couldn't respond to request due to IOException");
+                e.printStackTrace();
+            }
+        }
     } 
 
     /**
@@ -728,6 +804,19 @@ public class PenteGameEndpointHandler extends HttpServlet {
             resp.setContentType("application/json");
             try (PrintWriter out = resp.getWriter()) {
                 out.println("{\"error\": \"Missing required arguments: 'name' and 'description'\"}");
+            }
+            return;
+        } catch (IOException e) {
+            // TODO: handle exception
+        }
+    }
+
+    private void send422SemanticError(HttpServletResponse resp , String errMsg) {
+        try {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.setContentType("application/json");
+            try (PrintWriter out = resp.getWriter()) {
+                out.println("{\"error\": \"" + errMsg + "\"}");
             }
             return;
         } catch (IOException e) {

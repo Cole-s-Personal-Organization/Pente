@@ -15,7 +15,7 @@ public class PenteGameModel {
     private PenteGameSettings gameSettings;
     private Integer[] playerCaptures;
     private PenteBoardIdentifierEnum[][] gameBoard;
-    private PenteBoardIdentifierEnum winner;
+    private PentePlayerIdentifierEnum winner;
     private int COLS = 19;
     private int ROWS = 19;
 
@@ -49,6 +49,22 @@ public class PenteGameModel {
         this.winner = null;
         this.gameSettings = settings;
         this.playerCaptures = playerCaptures;
+    }
+    
+
+    /**
+     * Used for inflating previously made PenteGameModels
+     * @param gameSettings
+     * @param playerCaptures
+     * @param gameBoard
+     * @param winner
+     */
+    public PenteGameModel(PenteGameSettings gameSettings, Integer[] playerCaptures,
+            PenteBoardIdentifierEnum[][] gameBoard, PentePlayerIdentifierEnum winner) {
+        this.gameSettings = gameSettings;
+        this.playerCaptures = playerCaptures;
+        this.gameBoard = gameBoard;
+        this.winner = winner;
     }
 
     /**
@@ -101,14 +117,14 @@ public class PenteGameModel {
         List<int[]> removalCandidates = new ArrayList<>();
         while (curr_x >= 0 && curr_x < this.COLS && curr_y >= 0 && curr_y < this.ROWS &&
         this.gameBoard[curr_y][curr_x] != PenteBoardIdentifierEnum.EMPTY &&
-        this.gameBoard[curr_y][curr_x] != turn.getPlayerNumber()) {
+        this.gameBoard[curr_y][curr_x] != PenteHelperFunctions.mapPlayerEnumIdentifierToBoardEnumIdentifier(turn.getPlayerNumber())) {
             int[] removalCandidate = {curr_x, curr_y};
             removalCandidates.add(removalCandidate);
             curr_x += x_dir;
             curr_y += y_dir;
         }
         if (curr_x >= 0 && curr_x < this.COLS && curr_y >= 0 && curr_y < this.ROWS &&
-        this.gameBoard[curr_y][curr_x] == turn.getPlayerNumber()) {
+        this.gameBoard[curr_y][curr_x] == PenteHelperFunctions.mapPlayerEnumIdentifierToBoardEnumIdentifier(turn.getPlayerNumber())) {
             for (int i = 0; i < removalCandidates.size(); i++) {
                 gameBoard[removalCandidates.get(i)[1]][removalCandidates.get(i)[0]] =
                 PenteBoardIdentifierEnum.EMPTY;
@@ -122,8 +138,8 @@ public class PenteGameModel {
      * @param playerEnumId
      * @return the index of this player in the other data structures in this class
      */
-    private Integer getPlayerStoreIndexFromIdEnum(PenteBoardIdentifierEnum playerEnumId) {
-        ArrayList<PenteBoardIdentifierEnum> enumValues = new ArrayList<>(Arrays.asList(PenteBoardIdentifierEnum.values()));
+    private Integer getPlayerStoreIndexFromIdEnum(PentePlayerIdentifierEnum playerEnumId) {
+        ArrayList<PentePlayerIdentifierEnum> enumValues = new ArrayList<>(Arrays.asList(PentePlayerIdentifierEnum.values()));
         return enumValues.indexOf(playerEnumId) - 1;
     }
 
@@ -138,7 +154,7 @@ public class PenteGameModel {
         } catch (InvalidTurnException e) {
             throw e;
         }
-        this.gameBoard[turn.getPosY()][turn.getPosX()] = turn.getPlayerNumber();
+        this.gameBoard[turn.getPosY()][turn.getPosX()] = PenteHelperFunctions.mapPlayerEnumIdentifierToBoardEnumIdentifier(turn.getPlayerNumber());
     }
 
     /**
@@ -158,9 +174,6 @@ public class PenteGameModel {
         }
         if (!checkProSpecialRules(turn)) {
             throw new InvalidTurnException("Location does not conform to Pente pro ruleset.");
-        }
-        if (turn.getPlayerNumber() == PenteBoardIdentifierEnum.EMPTY) {
-            throw new InvalidTurnException("Player number cannot be set to EMPTY.");
         }
     }
 
@@ -222,7 +235,7 @@ public class PenteGameModel {
         int curr_x = turn.getPosX() + x_dir;
         int curr_y = turn.getPosY() + y_dir;
         while (curr_x >= 0 && curr_x < this.COLS && curr_y >= 0 && curr_y < this.ROWS &&
-        this.gameBoard[curr_y][curr_x] == turn.getPlayerNumber()) {
+        this.gameBoard[curr_y][curr_x] == PenteHelperFunctions.mapPlayerEnumIdentifierToBoardEnumIdentifier(turn.getPlayerNumber())) {
             counter += 1;
             curr_x += x_dir;
             curr_y += y_dir;
@@ -230,7 +243,7 @@ public class PenteGameModel {
         curr_x = turn.getPosX() - x_dir;
         curr_y = turn.getPosY() - y_dir;
         while (curr_x >= 0 && curr_x < this.COLS && curr_y >= 0 && curr_y < this.ROWS &&
-        this.gameBoard[curr_y][curr_x] == turn.getPlayerNumber()) {
+        this.gameBoard[curr_y][curr_x] ==  PenteHelperFunctions.mapPlayerEnumIdentifierToBoardEnumIdentifier(turn.getPlayerNumber())) {
             counter += 1;
             curr_x -= x_dir;
             curr_y -= y_dir;
@@ -250,7 +263,7 @@ public class PenteGameModel {
     public Integer[] getPlayerCaptures() {
         return playerCaptures;
     }
-    public PenteBoardIdentifierEnum getWinner() {
+    public PentePlayerIdentifierEnum getWinner() {
         return winner;
     }
 

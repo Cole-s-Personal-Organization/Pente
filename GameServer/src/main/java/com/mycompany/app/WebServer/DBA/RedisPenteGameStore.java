@@ -199,6 +199,16 @@ public class RedisPenteGameStore {
         }
     } 
 
+    public static PenteGameModel getPenteGameModel(Jedis jedis, UUID gameId) {
+        PenteGameSettings settings = getGameSettingsByGameId(jedis, gameId);
+        Integer[] captures = (Integer[]) getPlayerCaptures(jedis, gameId).toArray();
+        PenteBoardIdentifierEnum[][] board = getBoardStateByGameId(jedis, gameId);
+        PentePlayerIdentifierEnum winner = getGameWinner(jedis, gameId);
+
+        PenteGameModel model = new PenteGameModel(settings, captures, board, winner);
+        return model;
+    }
+
     public static ArrayList<UUID> getPlayersInGame(Jedis jedis, UUID gameId) {
         String SPECIFIED_GAME_PREFIX = GAME_PREFIX + gameId.toString();
 
